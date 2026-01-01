@@ -14,20 +14,32 @@
 
 ## What Is Autonomy?
 
-Autonomy is an open-source platform for capturing, processing, and synthesizing lived experience into coherent knowledge structures. It treats life as a continuous stream of signals — photos, videos, audio, text, locations — and uses AI-powered reflection to extract meaning, detect patterns, and preserve truth without distortion.
+Autonomy is an open-source platform for capturing, processing, and synthesizing lived experience into coherent knowledge structures. It treats life as a continuous stream of signals — photos, videos, audio, text, locations — and uses AI-powered metadata extraction to identify patterns and preserve truth without distortion.
 
-**Core principle:** Your reality should not be reframed, filtered, or flattened by systems that claim to help you. Autonomy maintains epistemic fidelity — what you document is what the system reflects, without protective overlays or institutional sanitization.
+**Core principle:** Your reality should not be reframed, filtered, or flattened by systems that claim to help you.  
+Autonomy maintains epistemic fidelity — what you document is what the system reflects, without protective overlays or institutional sanitization.
+
+---
+
+## Philosophy
+
+Autonomy is built on the recognition that:
+
+1. **Reality has structure.** Patterns are real and detectable.
+2. **Cognition has architecture.** Coherent thinking follows traceable logic.
+3. **Systems can fragment or preserve.** Most platforms fragment. Autonomy preserves.
+4. **Sovereignty matters.** You should own your data, your patterns, your truth.
+5. **Epistemic honesty is non-negotiable.** Systems that reframe your reality are abusive, even when they claim to help.
 
 ---
 
 ## Architecture
 
 ### Signal
-The atomic unit of lived data.  
-A photo, video, audio recording, text note, or location marker. Each signal is timestamped, geolocated (optional), and classified as:
+The atomic unit of lived data. A photo, video, audio recording, text note, or location marker. Each signal is timestamped, geolocated (optional), and classified as:
 - **Public** - shareable with the world.
 - **Private** - visible only to you.
-- **Sanctum** - highest sensitivity, protected space.
+- **Sanctum** - a protected space.
 
 ### Cluster
 Structured grouping of related signals based on:
@@ -35,24 +47,33 @@ Structured grouping of related signals based on:
 - **Spatial proximity** - signals from the same location.
 - **Thematic similarity** - signals with related content.
 
-### Reflection
-AI-powered analysis that extracts:
-- Metadata and context.
+### Metadata
+AI-powered extraction that identifies:
+- Themes and entities.
 - Emotional/cognitive markers.
 - Structural patterns.
 - Cross-signal relationships.
 
-**Critical:** Reflection does NOT reframe or pathologize. It maps what's there, not what "should" be there.
+**Critical:** Metadata extraction does _not_ reframe or pathologize. It maps what's there, not what "should" be there.
+
+### Reflection
+Narrative synthesis layer that transforms signals and metadata into coherent forms:
+
+- **Mirror** - High-fidelity representation without interpretive distortion. Shows you what you documented, as you documented it.
+- **Myth** - Archetypal pattern recognition. Lived reality rendered as mythic structure, revealing deeper patterns.
+- **Narrative** - Structured storytelling across temporal spans. Your signals woven into coherent narrative flow.
 
 ### Synthesis
-Pattern detection across signals and clusters over time. Identifies:
-- Recurring themes.
-- Trajectory shifts.
-- Structural coherence.
-- Emergent narratives.
 
-### Mirror
-High-fidelity representation of signals and clusters without interpretive distortion. Shows you what you documented, as you documented it.
+**Pattern detection and relationship mapping across signals and clusters over time.**
+
+The synthesis layer observes signal streams and identifies:
+- **Recurring themes** - patterns that repeat across temporal or spatial boundaries.
+- **Trajectory shifts** - inflection points where direction or tone changes.
+- **Structural coherence** - how signals relate to form larger patterns.
+- **Emergent narratives** - stories that become visible only at scale.
+
+**Synthesis generates Reflections from Clusters** - transforming grouped signals into coherent narrative forms (Mirror, Myth, or Narrative) that reveal patterns invisible at the individual signal level.
 
 ---
 
@@ -128,18 +149,7 @@ High-fidelity representation of signals and clusters without interpretive distor
 - Clustering algorithms (temporal, spatial, thematic).
 - Advanced synthesis and pattern detection.
 - Plugin system for custom integrations.
-
----
-
-## Philosophy
-
-Autonomy is built on the recognition that:
-
-1. **Reality has structure.** Patterns are real and detectable.
-2. **Cognition has architecture.** Coherent thinking follows traceable logic.
-3. **Systems can fragment or preserve.** Most platforms fragment. Autonomy preserves.
-4. **Sovereignty matters.** You should own your data, your patterns, your truth.
-5. **Epistemic honesty is non-negotiable.** Systems that reframe your reality are abusive, even when they claim to help.
+- An AI field companion trained on Autonomy data (named Remnant).
 
 ---
 
@@ -168,19 +178,6 @@ For now: Watch this space. The foundation is being built in public.
 
 ---
 
-## Contributing
-
-Contributions welcome once core architecture stabilizes (Q2 2026).
-
-**Areas where help will be needed:**
-- AI reflection pipeline development.
-- Signal processing modules.
-- Frontend component library.
-- Documentation and examples.
-- Testing and edge case handling.
-
----
-
 ## License
 
 MIT
@@ -191,9 +188,13 @@ The goal is maximum freedom to fork, modify, and deploy. Your data. Your infrast
 
 ## Contact
 
-**Project Lead:** [Robert Samuel White](https://rswfire.com/contact) (rswfire)  
-**Domain:** builtwithautonomy.com  
-**Core API:** rswfire.online
+**Project Lead:**
+
+- [Robert Samuel White](https://rswfire.com/contact) (rswfire)
+
+### Contributing
+
+Contributions are welcome from aligned receivers.
 
 ---
 
@@ -211,6 +212,7 @@ If that's not the relationship you want with your tools, this project is not for
 
 ---
 
-**Built with Autonomy. Built for truth. Built to remain.**
+**Built with Autonomy.**  
+**Built for truth. Built to remain.**
 
-🔥🌊⚡
+🔥🌊
