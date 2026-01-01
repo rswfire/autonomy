@@ -1,0 +1,38 @@
+{
+  "name": "@rswfire/builtwithautonomy.com",
+  "version": "1.0.0",
+  "description": "Built with Autonomy.",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rswfire/builtwithautonomy"
+  },
+  "homepage": "https://builtwithautonomy.com",
+  "keywords": [
+    "rswfire",
+    "autonomy"
+  ],
+  "author": "Robert Samuel White <rsw@rswfire.com>",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && next-sitemap --config ./next-sitemap.mjs",
+    "start": "next start"
+  },
+  "dependencies": {
+    "lucide-react": "^0.562.0",
+    "next": "16.1.0",
+    "next-sitemap": "^4.2.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
