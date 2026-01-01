@@ -1,0 +1,157 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [postgis(version: "3.3.2")] // For geo support
+}
+
+// ============================================================================
+// SIGNAL - Atomic unit of lived data
+// ============================================================================
+
+model Signal {
+  id          String   @id @default(cuid())
+  userId      String   // Owner of signal
+
+  type        SignalType
+  content     String   @db.Text // File path, URL, or text content
+
+  // Privacy classification
+  status      SignalStatus @default(PUBLIC)
+
+  // Temporal data
+  capturedAt  DateTime @default(now()) // When signal was created in real life
+  createdAt   DateTime @default(now()) // When signal was added to system
+  updatedAt   DateTime @updatedAt
+
+  // Spatial data (PostgreSQL geography type)
+  // Using Decimal for lat/lng - Prisma doesn't have native geo yet
+  latitude    Decimal? @db.Decimal(10, 8)
+  longitude   Decimal? @db.Decimal(11, 8)
+  // For production, you'd use PostGIS GEOGRAPHY type via raw SQL
+
+  // Metadata (flexible JSON)
+  metadata    Json?    @db.JsonB // Tags, custom fields, etc.
+
+  // Relations
+  reflection  Reflection?
+  clusters    ClusterSignal[]
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([capturedAt])
+}
+
+enum SignalType {
+  PHOTO
+  VIDEO
+  AUDIO
+  TEXT
+  LOCATION
+}
+
+enum SignalStatus {
+  PUBLIC
+  PRIVATE
+  SANCTUM
+}
+
+// ============================================================================
+// REFLECTION - AI-powered analysis of signal
+// ============================================================================
+
+model Reflection {
+  id          String   @id @default(cuid())
+  signalId    String   @unique
+  signal      Signal   @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  // AI-extracted data (all JSON for flexibility)
+  metadata    Json     @db.JsonB // Themes, entities, locations extracted
+  patterns    Json     @db.JsonB // Detected patterns, recurring elements
+  sentiment   Json     @db.JsonB // Emotional markers, cognitive state
+
+  // Processing metadata
+  provider    String   // "anthropic", "openai", "local", etc.
+  model       String   // "claude-sonnet-4", "gpt-4", etc.
+  processed   DateTime @default(now())
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([signalId])
+}
+
+// ============================================================================
+// CLUSTER - Grouped signals
+// ============================================================================
+
+model Cluster {
+  id          String   @id @default(cuid())
+  userId      String   // Owner
+
+  name        String
+  description String?  @db.Text
+  type        ClusterType
+
+  // Cluster metadata (flexible)
+  metadata    Json?    @db.JsonB // Temporal range, spatial bounds, themes
+
+  // Relations
+  signals     ClusterSignal[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+}
+
+enum ClusterType {
+  TEMPORAL   // Signals from same time period
+  SPATIAL    // Signals from same location
+  THEMATIC   // Signals with related content
+  MANUAL     // User-created grouping
+}
+
+// ============================================================================
+// CLUSTER_SIGNAL - Many-to-many join table
+// ============================================================================
+
+model ClusterSignal {
+  clusterId   String
+  signalId    String
+
+  cluster     Cluster @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  signal      Signal  @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  // Position in cluster (for ordering)
+  position    Int?
+
+  addedAt     DateTime @default(now())
+
+  @@id([clusterId, signalId])
+  @@index([clusterId])
+  @@index([signalId])
+}
+
+// ============================================================================
+// USER - Basic user model (expand later with NextAuth)
+// ============================================================================
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([email])
+}
