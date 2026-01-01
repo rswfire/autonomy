@@ -3,7 +3,7 @@ export default {
     siteUrl: 'https://builtwithautonomy.com',
     generateIndexSitemap: false,
     generateRobotsTxt: true,
-    outDir: './out',
+    outDir: './.next',
     changefreq: 'monthly',
     priority: 0.8,
 }
