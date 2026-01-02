@@ -1,14 +1,31 @@
-// prisma/schema.prisma
+// scripts/generate-schema.js
+
+require("dotenv").config();
+
+const fs = require("fs");
+
+const dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl) {
+    console.error("ERROR: DATABASE_URL environment variable not set.");
+    console.error("Please configure your database connection.");
+    console.error("See docs/setup.md for instructions.");
+    process.exit(1);
+}
+
+const isPostgres = dbUrl.startsWith("postgresql") || dbUrl.startsWith("postgres");
+
+const baseSchema = `// prisma/schema.prisma
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  ${isPostgres ? 'previewFeatures = ["postgresqlExtensions"]' : ''}
 }
 
 datasource db {
-  provider   = "postgresql"
+  provider   = "${isPostgres ? 'postgresql' : 'mysql'}"
   url        = env("DATABASE_URL")
-  extensions = [postgis]
+  ${isPostgres ? 'extensions = [postgis]' : ''}
 }
 
 
@@ -24,16 +41,19 @@ model Signal {
   signal_description  String?  @db.Text
   signal_author       String   @db.VarChar(50)
 
-  signal_location Unsupported("geography(Point, 4326)")? @map("signal_location")
+  ${isPostgres ? 'signal_location Unsupported("geography(Point, 4326)")? @map("signal_location")' : 'signal_latitude Decimal? @db.Decimal(10, 8)\n  signal_longitude Decimal? @db.Decimal(11, 8)'}
 
   signal_status      String  @default("PENDING")
   signal_visibility  String  @default("PUBLIC")
 
-  signal_metadata  Json?  @db.JsonB
-  signal_payload   Json?  @db.JsonB
-  signal_tags      Json?  @db.JsonB
+  signal_metadata  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_payload   Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_tags      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
 
-  signal_embedding Unsupported("vector(1536)")?
+  ${isPostgres
+    ? 'signal_embedding Unsupported("vector(1536)")?'
+    : 'signal_embedding Json? @db.Json'
+  }
 
   stamp_created   DateTime   @default(now())
   stamp_updated   DateTime?  @updatedAt
@@ -49,9 +69,9 @@ model Signal {
   @@index([signal_author],     map: "idx_signal-author")
   @@index([signal_status],     map: "idx_signal-status")
   @@index([signal_visibility], map: "idx_signal-visibility")
-  
-  
-  
+  ${!isPostgres ? '@@index([signal_latitude], map: "idx_signal_signal-latitude")' : ''}
+  ${!isPostgres ? '@@index([signal_longitude], map: "idx_signal_signal-longitude")' : ''}
+  ${!isPostgres ? '@@index([signal_latitude, signal_longitude], map: "idx_signal_signal-latitude_signal_signal-longitude")' : ''}
   @@index([stamp_created],     map: "idx_signal_stamp-created")
   @@index([stamp_imported],    map: "idx_signal_stamp-imported")
 
@@ -69,13 +89,16 @@ model Cluster {
   cluster_title  String  @db.VarChar(100)
   cluster_depth  Int     @default(0)
 
-  cluster_annotations  Json?   @db.JsonB
-  cluster_metadata     Json?   @db.JsonB
-  cluster_payload      Json?   @db.JsonB
-  cluster_tags         Json?   @db.JsonB
+  cluster_annotations  Json?   ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  cluster_metadata     Json?   ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  cluster_payload      Json?   ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  cluster_tags         Json?   ${isPostgres ? '@db.JsonB' : '@db.Json'}
   cluster_state        String  @db.VarChar(50)
 
-  cluster_embedding Unsupported("vector(1536)")?
+  ${isPostgres
+    ? 'cluster_embedding Unsupported("vector(1536)")?'
+    : 'cluster_embedding Json? @db.Json'
+  }
 
   stamp_cluster_start DateTime?
   stamp_cluster_end   DateTime?
@@ -110,7 +133,7 @@ model ClusterSignal {
   signal   Signal   @relation(fields: [signal_id], references: [signal_id], onDelete: Cascade)
 
   position        Int?
-  pivot_metadata  Json?     @db.JsonB
+  pivot_metadata  Json?     ${isPostgres ? '@db.JsonB' : '@db.Json'}
   stamp_added     DateTime  @default(now())
 
   @@id([cluster_id, signal_id])
@@ -138,12 +161,15 @@ model Metadata {
   signal   Signal?   @relation("MetadataToSignal", fields: [polymorphic_id], references: [signal_id], onDelete: Cascade, map: "fkey_metadata_signal-id")
   cluster  Cluster?  @relation("MetadataToCluster", fields: [polymorphic_id], references: [cluster_id], onDelete: Cascade, map: "fkey_metadata_cluster-id")
 
-  metadata_annotations  Json?  @db.JsonB
-  metadata_history      Json?  @db.JsonB
-  metadata_errors       Json?  @db.JsonB
-  metadata_content      Json?  @db.JsonB
+  metadata_annotations  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  metadata_history      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  metadata_errors       Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  metadata_content      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
 
-  metadata_embedding Unsupported("vector(1536)")?
+  ${isPostgres
+    ? 'metadata_embedding Unsupported("vector(1536)")?'
+    : 'metadata_embedding Json? @db.Json'
+}
 
   stamp_created  DateTime   @default(now())
   stamp_updated  DateTime?  @updatedAt
@@ -176,12 +202,15 @@ model Reflection {
   signal   Signal?   @relation("ReflectionToSignal", fields: [polymorphic_id], references: [signal_id], onDelete: Cascade, map: "fkey_reflection_signal-id")
   cluster  Cluster?  @relation("ReflectionToCluster", fields: [polymorphic_id], references: [cluster_id], onDelete: Cascade, map: "fkey_reflection_cluster-id")
 
-  reflection_annotations  Json?  @db.JsonB
-  reflection_history      Json?  @db.JsonB
-  reflection_errors       Json?  @db.JsonB
-  reflection_content      Json?  @db.JsonB
+  reflection_annotations  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  reflection_history      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  reflection_errors       Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  reflection_content      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
 
-  reflection_embedding Unsupported("vector(1536)")?
+  ${isPostgres
+    ? 'reflection_embedding Unsupported("vector(1536)")?'
+    : 'reflection_embedding Json? @db.Json'
+  }
 
   stamp_created  DateTime   @default(now())
   stamp_updated  DateTime?  @updatedAt
@@ -213,4 +242,13 @@ model User {
   @@index([user_email], map: "idx_user_user-email")
   @@index([user_name], map: "idx_user_user-name")
   @@index([stamp_created], map: "idx_user_stamp-created")
+}
+`;
+
+fs.writeFileSync("prisma/schema.prisma", baseSchema);
+console.log(`Generated schema for ${isPostgres ? "PostgreSQL" : "MySQL or compatible database"}.`);
+
+if (isPostgres) {
+    console.log("⚠IMPORTANT: PostGIS and Embedding features need indexes manually created.");
+    console.log("See docs/setup.md for instructions.");
 }

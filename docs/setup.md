@@ -8,6 +8,8 @@
 
 ## Autonomy Setup
 
+_I will formalize the steps for setup once they are stable._
+
 ### Service Setup
 
 `sudo nano /etc/systemd/system/builtwithautonomy.service`
@@ -67,4 +69,33 @@ server {
 
     add_header Permissions-Policy "interest-cohort=()" always;
 }
+```
+
+### Database Schema
+
+We use PostGIS extension in Postgres because it is awesome. Other databases do not support it, so I have provided an adaptable script for managing database schema.
+
+`package.json`:
+```json
+{
+  "scripts": {
+    "db:generate-schema": "node scripts/generate-schema.js",
+    "db:push": "npm run db:generate-schema && npx prisma db push",
+    "db:generate": "npm run db:generate-schema && npx prisma generate",
+    "build": "npm run db:generate && next build"
+  },
+}
+```
+
+Run `npm run db:push` to generate the schema and push to the database you configured in `.env`.
+
+Postgres will need indexes manually created for features that use extensions.
+
+```sql
+CREATE INDEX `idx_signal-location` ON signals USING GIST (signal_location);
+
+CREATE INDEX `idx_signal-embedding`
+ON signals
+USING ivfflat (signal_embedding vector_cosine_ops)
+WITH (lists = 100);
 ```
