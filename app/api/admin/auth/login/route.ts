@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SignJWT } from 'jose'
 import { verifyPassword } from '@/lib/utils/password'
-import { getUserByEmail } from '@/lib/queries/users'
+import { getUserByEmail } from '@/lib/queries/user'
 
 const secret = new TextEncoder().encode(
     process.env.JWT_SECRET || 'your-secret-key-change-in-production'
