@@ -18,6 +18,7 @@ import type {
 } from '../validation/cluster'
 import { requireOwner } from '../utils/permissions'
 import type { UserRole } from '../types'
+import { ulid } from '../utils/ulid'
 
 /**
  * Create a new cluster
@@ -32,6 +33,7 @@ export async function createCluster(
 
     return await prisma.cluster.create({
         data: {
+            cluster_id: ulid(),
             ...rest,
             ...(cluster_annotations && { cluster_annotations: cluster_annotations as Prisma.InputJsonValue }),
             ...(cluster_metadata && { cluster_metadata: cluster_metadata as Prisma.InputJsonValue }),

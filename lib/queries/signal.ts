@@ -15,13 +15,17 @@ import type {
 import { isPostgres } from '../types'
 import { requireOwner, buildVisibilityFilter } from '../utils/permissions'
 import type { UserRole } from '../types'
+import { ulid, ulidFromDate } from '../utils/ulid'
 
 /**
  * Create a new signal
  */
 export async function createSignal(
     data: CreateSignalInput,
-    user_role: UserRole
+    user_role: UserRole,
+    options?: {
+        timestamp?: Date  // Optional: custom timestamp for ULID
+    }
 ): Promise<Signal> {
     requireOwner(user_role, 'create signals')
 
@@ -44,6 +48,7 @@ export async function createSignal(
 
     return await prisma.signal.create({
         data: {
+            signal_id: ulid(),
             ...rest,
             ...geoData,
             ...(signal_metadata && { signal_metadata: signal_metadata as Prisma.InputJsonValue }),

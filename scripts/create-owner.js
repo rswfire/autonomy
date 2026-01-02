@@ -4,6 +4,7 @@ require('dotenv').config()
 const readline = require('readline')
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
+const { ulid } = require('ulid')
 
 const prisma = new PrismaClient()
 
@@ -14,54 +15,6 @@ const rl = readline.createInterface({
 
 function question(query) {
     return new Promise((resolve) => rl.question(query, resolve))
-}
-
-function questionHidden(query) {
-    return new Promise((resolve) => {
-        const stdin = process.stdin
-        const stdout = process.stdout
-
-        stdout.write(query)
-        stdin.setRawMode(true)
-        stdin.resume()
-        stdin.setEncoding('utf8')
-
-        let password = ''
-
-        const onData = (char) => {
-            char = char.toString('utf8')
-
-            switch (char) {
-                case '\n':
-                case '\r':
-                case '\u0004': // Ctrl+D
-                    stdin.setRawMode(false)
-                    stdin.pause()
-                    stdin.removeListener('data', onData)
-                    stdout.write('\n')
-                    resolve(password)
-                    break
-                case '\u0003': // Ctrl+C
-                    process.exit()
-                    break
-                case '\u007f': // Backspace
-                case '\b':
-                    if (password.length > 0) {
-                        password = password.slice(0, -1)
-                        stdout.clearLine(0)
-                        stdout.cursorTo(0)
-                        stdout.write(query + '*'.repeat(password.length))
-                    }
-                    break
-                default:
-                    password += char
-                    stdout.write('*')
-                    break
-            }
-        }
-
-        stdin.on('data', onData)
-    })
 }
 
 async function validateEmail(email) {
@@ -146,11 +99,14 @@ async function createOwner() {
         // Get name (optional)
         const name = await question('Name (optional): ')
 
-        // Get password
+        // Get password with warning
+        console.log('\n⚠️  WARNING: Password will be visible on screen')
+        console.log('Make sure no one is looking over your shoulder\n')
+
         let password = ''
         let passwordValid = false
         while (!passwordValid) {
-            password = await questionHidden('Password: ')
+            password = await question('Password: ')
             const errors = await validatePassword(password)
 
             if (errors.length > 0) {
@@ -158,7 +114,7 @@ async function createOwner() {
                 errors.forEach((err) => console.log(`   - ${err}`))
                 console.log('')
             } else {
-                const confirmPassword = await questionHidden('Confirm password: ')
+                const confirmPassword = await question('Confirm password: ')
                 if (password !== confirmPassword) {
                     console.log('❌ Passwords do not match. Please try again.\n')
                 } else {
@@ -173,8 +129,10 @@ async function createOwner() {
 
         // Create user
         console.log('📝 Creating owner account...')
+        const { ulid } = require('ulid')
         const user = await prisma.user.create({
             data: {
+                user_id: ulid().toUpperCase(),
                 user_email: email,
                 user_name: name || null,
                 user_password: hashedPassword,

@@ -3,6 +3,7 @@ import { prisma } from '../db'
 import type { User } from '../types'
 import { hashPassword, verifyPassword } from '../utils/password'
 import type { CreateUserInput, UpdateUserInput, LoginInput, ChangePasswordInput } from '../validation/user'
+import { ulid } from '../utils/ulid'
 
 /**
  * Create a new user
@@ -15,6 +16,7 @@ export async function createUser(data: CreateUserInput): Promise<User> {
 
     return await prisma.user.create({
         data: {
+            user_id: ulid(),
             ...rest,
             user_password: hashedPassword,
         },

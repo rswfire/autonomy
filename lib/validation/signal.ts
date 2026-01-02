@@ -7,6 +7,7 @@ import {
     LIMITS,
     GEO,
 } from '../constants'
+import { isValidUlid } from '../utils/ulid'
 
 // Geospatial validation
 const coordinatesSchema = z.object({
@@ -24,7 +25,7 @@ const geographyPointSchema = z.object({
 
 // Base signal schema
 export const signalSchema = z.object({
-    signal_id: z.string().length(26).optional(),
+    signal_id: z.string().length(26).refine(isValidUlid, 'Invalid ULID').optional(),
     signal_type: z.enum(SIGNAL_TYPES),
     signal_title: z.string().min(1).max(LIMITS.SIGNAL_TITLE_MAX),
     signal_description: z.string().nullable().optional(),
@@ -69,7 +70,7 @@ export const createSignalSchema = signalSchema.pick({
 
 // Update signal (all fields optional except id)
 export const updateSignalSchema = z.object({
-    signal_id: z.string().length(26),
+    signal_id: z.string().length(26).refine(isValidUlid, 'Invalid ULID'),
     signal_type: z.enum(SIGNAL_TYPES).optional(),
     signal_title: z.string().min(1).max(LIMITS.SIGNAL_TITLE_MAX).optional(),
     signal_description: z.string().nullable().optional(),

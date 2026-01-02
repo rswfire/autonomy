@@ -18,7 +18,7 @@ datasource db {
 
 model Signal {
 
-  signal_id           String   @id @default(cuid()) @db.VarChar(26)
+  signal_id           String   @id @db.VarChar(26)
   signal_type         String   @db.VarChar(50)
   signal_title        String   @db.VarChar(100)
   signal_description  String?  @db.Text
@@ -63,7 +63,7 @@ model Signal {
 
 model Cluster {
 
-  cluster_id     String  @id @default(cuid()) @db.VarChar(26)
+  cluster_id     String  @id @db.VarChar(26)
   cluster_type   String  @db.VarChar(50)
   cluster_title  String  @db.VarChar(100)
   cluster_depth  Int     @default(0)
@@ -101,8 +101,8 @@ model Cluster {
 
 model ClusterSignal {
 
-  cluster_id  String  @default(cuid()) @db.VarChar(26)
-  signal_id   String  @default(cuid()) @db.VarChar(26)
+  cluster_id  String   @db.VarChar(26)
+  signal_id   String   @db.VarChar(26)
 
   cluster  Cluster  @relation(fields: [cluster_id], references: [cluster_id], onDelete: Cascade)
   signal   Signal   @relation(fields: [signal_id], references: [signal_id], onDelete: Cascade)
@@ -125,13 +125,13 @@ model ClusterSignal {
 
 model Synthesis {
 
-  synthesis_id       String   @id @default(cuid()) @db.VarChar(26)
+  synthesis_id       String   @id @db.VarChar(26)
   synthesis_type     String   @db.VarChar(50)  // METADATA | REFLECTION
   synthesis_subtype  String   @db.VarChar(50)  // SURFACE, STRUCTURE, PATTERNS | MIRROR, MYTH, NARRATIVE
   synthesis_source   String?  @db.VarChar(100)
   synthesis_depth    Int      @default(0)
 
-  polymorphic_id    String  @default(cuid()) @db.VarChar(26)
+  polymorphic_id    String   @db.VarChar(26)
   polymorphic_type  String  @db.VarChar(50)
 
   signal   Signal?   @relation("SynthesisToSignal", fields: [polymorphic_id], references: [signal_id], onDelete: Cascade, map: "fkey_synthesis_signal-id")
@@ -165,7 +165,7 @@ model Synthesis {
 //
 
 model User {
-  user_id        String   @id @default(cuid()) @db.VarChar(26)
+  user_id        String   @id @db.VarChar(26)
   user_email     String   @unique
   user_name      String?
   user_password  String   @db.VarChar(255)  // Hashed password

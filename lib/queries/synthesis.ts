@@ -16,6 +16,7 @@ import type {
 } from '../validation/synthesis'
 import { requireOwner } from '../utils/permissions'
 import type { UserRole } from '../types'
+import { ulid } from '../utils/ulid'
 
 /**
  * Create a new synthesis
@@ -30,6 +31,7 @@ export async function createSynthesis(
 
     return await prisma.synthesis.create({
         data: {
+            synthesis_id: ulid(),
             ...rest,
             ...(synthesis_annotations && { synthesis_annotations: synthesis_annotations as Prisma.InputJsonValue }),
             ...(synthesis_content && { synthesis_content: synthesis_content as Prisma.InputJsonValue }),
