@@ -59,8 +59,7 @@ model Signal {
   stamp_updated   DateTime?  @updatedAt
   stamp_imported  DateTime?  @default(now())
 
-  metadata     Metadata[]       @relation("MetadataToSignal")
-  reflections  Reflection[]     @relation("ReflectionToSignal")
+  synthesis    Synthesis[]      @relation("SynthesisToSignal")
   clusters     ClusterSignal[]
 
   @@map("signals")
@@ -108,9 +107,8 @@ model Cluster {
   parent_cluster     Cluster?   @relation("ClusterHierarchy", fields: [parent_cluster_id], references: [cluster_id])
   child_clusters     Cluster[]  @relation("ClusterHierarchy")
 
-  signals      ClusterSignal[]
-  metadata     Metadata[] @relation("MetadataToCluster")
-  reflections  Reflection[] @relation("ReflectionToCluster")
+  signals    ClusterSignal[]
+  synthesis  Synthesis[] @relation("SynthesisToCluster")
 
   @@map("clusters")
   @@index([cluster_type], map: "idx_cluster_cluster-type")
@@ -132,7 +130,7 @@ model ClusterSignal {
   cluster  Cluster  @relation(fields: [cluster_id], references: [cluster_id], onDelete: Cascade)
   signal   Signal   @relation(fields: [signal_id], references: [signal_id], onDelete: Cascade)
 
-  position        Int?
+  pivot_position  Int?
   pivot_metadata  Json?     ${isPostgres ? '@db.JsonB' : '@db.Json'}
   stamp_added     DateTime  @default(now())
 
@@ -145,83 +143,45 @@ model ClusterSignal {
 
 
 //
-// METADATA -- AI EXTRACTION LAYER
+// SYNTHESIS -- AI EXTRACTION LAYER
 //
 
-model Metadata {
+model Synthesis {
 
-  metadata_id      String   @id @default(cuid()) @db.VarChar(26)
-  metadata_type    String   @db.VarChar(50)  // SURFACE, STRUCTURE, PATTERNS
-  metadata_source  String?  @db.VarChar(100)
-  metadata_depth   Int      @default(0)
+  synthesis_id       String   @id @default(cuid()) @db.VarChar(26)
+  synthesis_type     String   @db.VarChar(50)  // METADATA | REFLECTION
+  synthesis_subtype  String   @db.VarChar(50)  // SURFACE, STRUCTURE, PATTERNS | MIRROR, MYTH, NARRATIVE
+  synthesis_source   String?  @db.VarChar(100)
+  synthesis_depth    Int      @default(0)
 
   polymorphic_id    String  @default(cuid()) @db.VarChar(26)
   polymorphic_type  String  @db.VarChar(50)
 
-  signal   Signal?   @relation("MetadataToSignal", fields: [polymorphic_id], references: [signal_id], onDelete: Cascade, map: "fkey_metadata_signal-id")
-  cluster  Cluster?  @relation("MetadataToCluster", fields: [polymorphic_id], references: [cluster_id], onDelete: Cascade, map: "fkey_metadata_cluster-id")
+  signal   Signal?   @relation("SynthesisToSignal", fields: [polymorphic_id], references: [signal_id], onDelete: Cascade, map: "fkey_synthesis_signal-id")
+  cluster  Cluster?  @relation("SynthesisToCluster", fields: [polymorphic_id], references: [cluster_id], onDelete: Cascade, map: "fkey_synthesis_cluster-id")
 
-  metadata_annotations  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  metadata_history      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  metadata_errors       Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  metadata_content      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  synthesis_annotations  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  synthesis_history      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  synthesis_errors       Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  synthesis_content      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
 
   ${isPostgres
-    ? 'metadata_embedding Unsupported("vector(1536)")?'
-    : 'metadata_embedding Json? @db.Json'
+    ? 'synthesis_embedding Unsupported("vector(1536)")?'
+    : 'synthesis_embedding Json? @db.Json'
 }
 
   stamp_created  DateTime   @default(now())
   stamp_updated  DateTime?  @updatedAt
 
-  @@map("metadata")
-  @@index([metadata_type], map: "idx_metadata_metadata-type")
-  @@index([metadata_source], map: "idx_metadata_metadata-source")
-  @@index([polymorphic_id], map: "idx_metadata_polymorphic-id")
-  @@index([polymorphic_type], map: "idx_metadata_polymorphic-type")
-  @@index([polymorphic_id, polymorphic_type], map: "idx_metadata_polymorphic-id_metadata_polymorphic-type")
-  @@index([stamp_created], map: "idx_metadata_stamp_created")
-
-}
-
-
-//
-// REFLECTION -- AI NARRATIVE SYNTHESIS LAYER
-//
-
-model Reflection {
-
-  reflection_id      String   @id @default(cuid()) @db.VarChar(26)
-  reflection_type    String   @db.VarChar(50)  // MIRROR, MYTH, NARRATIVE
-  reflection_source  String?  @db.VarChar(100)
-  reflection_depth   Int      @default(0)
-
-  polymorphic_id    String  @default(cuid()) @db.VarChar(26)
-  polymorphic_type  String  @db.VarChar(50)
-
-  signal   Signal?   @relation("ReflectionToSignal", fields: [polymorphic_id], references: [signal_id], onDelete: Cascade, map: "fkey_reflection_signal-id")
-  cluster  Cluster?  @relation("ReflectionToCluster", fields: [polymorphic_id], references: [cluster_id], onDelete: Cascade, map: "fkey_reflection_cluster-id")
-
-  reflection_annotations  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  reflection_history      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  reflection_errors       Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  reflection_content      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-
-  ${isPostgres
-    ? 'reflection_embedding Unsupported("vector(1536)")?'
-    : 'reflection_embedding Json? @db.Json'
-  }
-
-  stamp_created  DateTime   @default(now())
-  stamp_updated  DateTime?  @updatedAt
-
-  @@map("reflections")
-  @@index([reflection_type], map: "idx_reflection_reflection-type")
-  @@index([reflection_source], map: "idx_reflection_reflection-source")
-  @@index([polymorphic_id], map: "idx_reflection_polymorphic-id")
-  @@index([polymorphic_type], map: "idx_reflection_polymorphic-type")
-  @@index([polymorphic_id, polymorphic_type], map: "idx_reflection_polymorphic-id_reflection_polymorphic-type")
-  @@index([stamp_created], map: "idx_reflection_stamp_created")
+  @@map("synthesis")
+  @@index([synthesis_type], map: "idx_synthesis_synthesis-type")
+  @@index([synthesis_subtype], map: "idx_synthesis_synthesis-subtype")
+  @@index([synthesis_type, synthesis_subtype], map: "idx_synthesis_synthesis-type_synthesis-subtype")
+  @@index([synthesis_source], map: "idx_synthesis_synthesis-source")
+  @@index([polymorphic_id], map: "idx_synthesis_polymorphic-id")
+  @@index([polymorphic_type], map: "idx_synthesis_polymorphic-type")
+  @@index([polymorphic_id, polymorphic_type], map: "idx_synthesis_polymorphic-id_synthesis_polymorphic-type")
+  @@index([stamp_created], map: "idx_synthesis_stamp_created")
 
 }
 
