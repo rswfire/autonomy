@@ -6,14 +6,20 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rswfire/builtwithautonomy"
+    "url": "https://github.com/rswfire/builtwithautonomy.com"
   },
   "homepage": "https://builtwithautonomy.com",
   "keywords": [
     "rswfire",
-    "autonomy"
+    "autonomy",
+    "cognitive-infrastructure",
+    "epistemic-fidelity",
+    "signal-processing",
+    "pattern-synthesis",
+    "non-destructive-analysis",
+    "sovereign-data"
   ],
-  "author": "Robert Samuel White <rsw@rswfire.com>",
+  "author": "Robert Samuel White <rsw@rswfire.com>"
   "scripts": {
     "create-owner": "node scripts/create-owner.js",
     "db:generate-schema": "node scripts/generate-schema.js",
