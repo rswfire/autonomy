@@ -17,7 +17,7 @@ import type {
     ClusterFilter,
 } from '../validation/cluster'
 import { requireOwner } from '../utils/permissions'
-import type { UserRole } from '../constants'
+import type { UserRole } from '../types'
 
 /**
  * Create a new cluster

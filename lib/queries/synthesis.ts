@@ -15,7 +15,7 @@ import type {
     SynthesisFilter,
 } from '../validation/synthesis'
 import { requireOwner } from '../utils/permissions'
-import type { UserRole } from '../constants'
+import type { UserRole } from '../types'
 
 /**
  * Create a new synthesis

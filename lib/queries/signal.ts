@@ -14,7 +14,7 @@ import type {
 } from '../validation/signal'
 import { isPostgres } from '../types'
 import { requireOwner, buildVisibilityFilter } from '../utils/permissions'
-import type { UserRole } from '../constants'
+import type { UserRole } from '../types'
 
 /**
  * Create a new signal

@@ -1,5 +1,5 @@
 // lib/utils/permissions.ts
-import type { UserRole } from '../constants'
+import type { UserRole } from '../types'
 import { ROLE_PERMISSIONS } from '../constants'
 import { prisma } from '../db'
 
