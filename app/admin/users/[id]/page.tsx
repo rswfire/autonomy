@@ -1,6 +1,5 @@
 // app/admin/users/[id]/page.tsx
-import { DynamicModelForm } from '@/components/admin/DynamicModelForm'
-import { userFormConfig } from '@/lib/admin/form-config'
+import { UserForm } from '@/components/admin/forms/UserForm'
 import { getUserById } from '@/lib/queries/user'
 import { requireAuth } from '@/lib/utils/auth'
 import { notFound } from 'next/navigation'
@@ -20,16 +19,11 @@ export default async function EditUserPage({
         notFound()
     }
 
-    // Strip password from defaultValues
     const { user_password, ...userWithoutPassword } = user
 
     return (
         <div className="max-w-5xl mx-auto py-8 px-6">
-            <DynamicModelForm
-                config={userFormConfig}
-                mode="edit"
-                defaultValues={userWithoutPassword}
-            />
+            <UserForm mode="edit" defaultValues={userWithoutPassword} />
         </div>
     )
 }

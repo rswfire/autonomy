@@ -1,6 +1,5 @@
 // app/admin/clusters/[id]/page.tsx
-import { DynamicModelForm } from '@/components/admin/DynamicModelForm'
-import { clusterFormConfig } from '@/lib/admin/form-config'
+import { ClusterForm } from '@/components/admin/forms/ClusterForm'
 import { getClusterById } from '@/lib/queries/cluster'
 import { requireAuth } from '@/lib/utils/auth'
 import { notFound } from 'next/navigation'
@@ -22,11 +21,7 @@ export default async function EditClusterPage({
 
     return (
         <div className="max-w-5xl mx-auto py-8 px-6">
-            <DynamicModelForm
-                config={clusterFormConfig}
-                mode="edit"
-                defaultValues={cluster}
-            />
+            <ClusterForm mode="edit" defaultValues={cluster} />
         </div>
     )
 }

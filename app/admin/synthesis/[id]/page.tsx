@@ -1,6 +1,5 @@
 // app/admin/synthesis/[id]/page.tsx
-import { DynamicModelForm } from '@/components/admin/DynamicModelForm'
-import { synthesisFormConfig } from '@/lib/admin/form-config'
+import { SynthesisForm } from '@/components/admin/forms/SynthesisForm'
 import { getSynthesisById } from '@/lib/queries/synthesis'
 import { requireAuth } from '@/lib/utils/auth'
 import { notFound } from 'next/navigation'
@@ -22,11 +21,7 @@ export default async function EditSynthesisPage({
 
     return (
         <div className="max-w-5xl mx-auto py-8 px-6">
-            <DynamicModelForm
-                config={synthesisFormConfig}
-                mode="edit"
-                defaultValues={synthesis}
-            />
+            <SynthesisForm mode="edit" defaultValues={synthesis} />
         </div>
     )
 }
