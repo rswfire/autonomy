@@ -13,11 +13,18 @@ import type {
     SignalFilter,
 } from '../validation/signal'
 import { isPostgres } from '../types'
+import { requireOwner, buildVisibilityFilter } from '../utils/permissions'
+import type { UserRole } from '../constants'
 
 /**
  * Create a new signal
  */
-export async function createSignal(data: CreateSignalInput): Promise<Signal> {
+export async function createSignal(
+    data: CreateSignalInput,
+    user_role: UserRole
+): Promise<Signal> {
+    requireOwner(user_role, 'create signals')
+
     const { coordinates, signal_metadata, signal_payload, signal_tags, ...rest } = data
 
     // Handle geospatial data based on DB type
@@ -47,10 +54,11 @@ export async function createSignal(data: CreateSignalInput): Promise<Signal> {
 }
 
 /**
- * Get signal by ID
+ * Get signal by ID with visibility check
  */
 export async function getSignalById(
     signal_id: string,
+    user_role: UserRole | null = null,
     options?: {
         include_synthesis?: boolean
         include_clusters?: boolean
@@ -67,16 +75,33 @@ export async function getSignalById(
             : false,
     }
 
-    return await prisma.signal.findUnique({
+    const signal = await prisma.signal.findUnique({
         where: { signal_id },
         include,
     })
+
+    // Check visibility permissions
+    if (signal && user_role !== 'OWNER') {
+        const visibilityFilter = buildVisibilityFilter(user_role)
+        const allowedLevels = visibilityFilter.signal_visibility?.in || ['PUBLIC']
+
+        if (!allowedLevels.includes(signal.signal_visibility)) {
+            return null // Not authorized to view
+        }
+    }
+
+    return signal
 }
 
 /**
  * Update signal
  */
-export async function updateSignal(data: UpdateSignalInput): Promise<Signal> {
+export async function updateSignal(
+    data: UpdateSignalInput,
+    user_role: UserRole
+): Promise<Signal> {
+    requireOwner(user_role, 'update signals')
+
     const {
         signal_id,
         coordinates,
@@ -117,7 +142,12 @@ export async function updateSignal(data: UpdateSignalInput): Promise<Signal> {
 /**
  * Delete signal
  */
-export async function deleteSignal(signal_id: string): Promise<Signal> {
+export async function deleteSignal(
+    signal_id: string,
+    user_role: UserRole
+): Promise<Signal> {
+    requireOwner(user_role, 'delete signals')
+
     return await prisma.signal.delete({
         where: { signal_id },
     })
@@ -126,7 +156,10 @@ export async function deleteSignal(signal_id: string): Promise<Signal> {
 /**
  * Query signals with filters
  */
-export async function querySignals(filter: SignalFilter): Promise<{
+export async function querySignals(
+    filter: SignalFilter,
+    user_role: UserRole | null = null
+): Promise<{
     signals: Signal[]
     total: number
 }> {
@@ -146,16 +179,24 @@ export async function querySignals(filter: SignalFilter): Promise<{
         offset,
         sort_by,
         sort_order,
-        near, // Geospatial query handled separately
+        near,
     } = filter
 
     // Build where clause
     const where: any = {}
 
+    // Apply visibility filter based on user role
+    const visibilityFilter = buildVisibilityFilter(user_role)
+    Object.assign(where, visibilityFilter)
+
+    // Override if specific visibility requested AND user has permission
+    if (signal_visibility && user_role === 'OWNER') {
+        where.signal_visibility = signal_visibility
+    }
+
     if (signal_type) where.signal_type = signal_type
     if (signal_author) where.signal_author = signal_author
     if (signal_status) where.signal_status = signal_status
-    if (signal_visibility) where.signal_visibility = signal_visibility
 
     // Date filters
     if (created_after || created_before) {
@@ -197,11 +238,8 @@ export async function querySignals(filter: SignalFilter): Promise<{
     }
 
     // Geospatial query (requires custom implementation per DB)
-    // This is a placeholder - actual implementation depends on PostGIS vs MySQL spatial
     if (near) {
         // TODO: Implement geospatial filtering
-        // Postgres: ST_DWithin(signal_location, ST_MakePoint(lng, lat)::geography, radius)
-        // MySQL: ST_Distance_Sphere(point(lng, lat), point(signal_longitude, signal_latitude)) <= radius
         console.warn('Geospatial filtering not yet implemented')
     }
 
@@ -232,13 +270,20 @@ export async function querySignals(filter: SignalFilter): Promise<{
  */
 export async function getSignalsByAuthor(
     signal_author: string,
+    user_role: UserRole | null = null,
     options?: {
         limit?: number
         offset?: number
     }
 ): Promise<Signal[]> {
+    const where: any = { signal_author }
+
+    // Apply visibility filter
+    const visibilityFilter = buildVisibilityFilter(user_role)
+    Object.assign(where, visibilityFilter)
+
     return await prisma.signal.findMany({
-        where: { signal_author },
+        where,
         orderBy: { stamp_created: 'desc' },
         take: options?.limit ?? 10,
         skip: options?.offset ?? 0,
@@ -250,13 +295,20 @@ export async function getSignalsByAuthor(
  */
 export async function getSignalsByType(
     signal_type: string,
+    user_role: UserRole | null = null,
     options?: {
         limit?: number
         offset?: number
     }
 ): Promise<Signal[]> {
+    const where: any = { signal_type }
+
+    // Apply visibility filter
+    const visibilityFilter = buildVisibilityFilter(user_role)
+    Object.assign(where, visibilityFilter)
+
     return await prisma.signal.findMany({
-        where: { signal_type },
+        where,
         orderBy: { stamp_created: 'desc' },
         take: options?.limit ?? 10,
         skip: options?.offset ?? 0,
@@ -264,15 +316,18 @@ export async function getSignalsByType(
 }
 
 /**
- * Get signals by visibility
+ * Get signals by visibility (owner only)
  */
 export async function getSignalsByVisibility(
     signal_visibility: string,
+    user_role: UserRole,
     options?: {
         limit?: number
         offset?: number
     }
 ): Promise<Signal[]> {
+    requireOwner(user_role, 'query by visibility')
+
     return await prisma.signal.findMany({
         where: { signal_visibility },
         orderBy: { stamp_created: 'desc' },
@@ -284,17 +339,31 @@ export async function getSignalsByVisibility(
 /**
  * Get recent signals
  */
-export async function getRecentSignals(limit: number = 10): Promise<Signal[]> {
+export async function getRecentSignals(
+    user_role: UserRole | null = null,
+    limit: number = 10
+): Promise<Signal[]> {
+    const where: any = {}
+
+    // Apply visibility filter
+    const visibilityFilter = buildVisibilityFilter(user_role)
+    Object.assign(where, visibilityFilter)
+
     return await prisma.signal.findMany({
+        where,
         orderBy: { stamp_created: 'desc' },
         take: limit,
     })
 }
 
 /**
- * Count signals by status
+ * Count signals by status (owner only)
  */
-export async function countSignalsByStatus(): Promise<Record<string, number>> {
+export async function countSignalsByStatus(
+    user_role: UserRole
+): Promise<Record<string, number>> {
+    requireOwner(user_role, 'view signal statistics')
+
     const results = await prisma.signal.groupBy({
         by: ['signal_status'],
         _count: true,
@@ -309,8 +378,11 @@ export async function countSignalsByStatus(): Promise<Record<string, number>> {
 /**
  * Get signal with full relations
  */
-export async function getSignalComplete(signal_id: string): Promise<SignalComplete | null> {
-    return await prisma.signal.findUnique({
+export async function getSignalComplete(
+    signal_id: string,
+    user_role: UserRole | null = null
+): Promise<SignalComplete | null> {
+    const signal = await prisma.signal.findUnique({
         where: { signal_id },
         include: {
             synthesis: true,
@@ -321,4 +393,16 @@ export async function getSignalComplete(signal_id: string): Promise<SignalComple
             },
         },
     })
+
+    // Check visibility permissions
+    if (signal && user_role !== 'OWNER') {
+        const visibilityFilter = buildVisibilityFilter(user_role)
+        const allowedLevels = visibilityFilter.signal_visibility?.in || ['PUBLIC']
+
+        if (!allowedLevels.includes(signal.signal_visibility)) {
+            return null // Not authorized to view
+        }
+    }
+
+    return signal
 }

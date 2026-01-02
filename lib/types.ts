@@ -95,6 +95,21 @@ export type SynthesisErrors = Array<{
     context?: Record<string, unknown>
 }>
 
+import type { USER_ROLES } from './constants'
+
+export type UserRole = typeof USER_ROLES[number]
+
+// User with role info
+export type UserWithPermissions = User & {
+    permissions: {
+        can_create: boolean
+        can_edit: boolean
+        can_delete: boolean
+        can_view_sanctum: boolean
+        can_view_private: boolean
+    }
+}
+
 // Embedding types
 export type EmbeddingVector = number[] // 1536 dimensions for OpenAI ada-002
 

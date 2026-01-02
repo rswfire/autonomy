@@ -14,11 +14,18 @@ import type {
     AddSynthesisErrorInput,
     SynthesisFilter,
 } from '../validation/synthesis'
+import { requireOwner } from '../utils/permissions'
+import type { UserRole } from '../constants'
 
 /**
  * Create a new synthesis
  */
-export async function createSynthesis(data: CreateSynthesisInput): Promise<Synthesis> {
+export async function createSynthesis(
+    data: CreateSynthesisInput,
+    user_role: UserRole
+): Promise<Synthesis> {
+    requireOwner(user_role, 'create synthesis')
+
     const { synthesis_annotations, synthesis_content, ...rest } = data
 
     return await prisma.synthesis.create({
@@ -66,7 +73,12 @@ export async function getSynthesisById(
 /**
  * Update synthesis
  */
-export async function updateSynthesis(data: UpdateSynthesisInput): Promise<Synthesis> {
+export async function updateSynthesis(
+    data: UpdateSynthesisInput,
+    user_role: UserRole
+): Promise<Synthesis> {
+    requireOwner(user_role, 'update synthesis')
+
     const {
         synthesis_id,
         synthesis_annotations,
@@ -89,7 +101,12 @@ export async function updateSynthesis(data: UpdateSynthesisInput): Promise<Synth
 /**
  * Delete synthesis
  */
-export async function deleteSynthesis(synthesis_id: string): Promise<Synthesis> {
+export async function deleteSynthesis(
+    synthesis_id: string,
+    user_role: UserRole
+): Promise<Synthesis> {
+    requireOwner(user_role, 'delete synthesis')
+
     return await prisma.synthesis.delete({
         where: { synthesis_id },
     })
@@ -99,8 +116,11 @@ export async function deleteSynthesis(synthesis_id: string): Promise<Synthesis> 
  * Add entry to synthesis history
  */
 export async function addSynthesisHistory(
-    data: AddSynthesisHistoryInput
+    data: AddSynthesisHistoryInput,
+    user_role: UserRole
 ): Promise<Synthesis> {
+    requireOwner(user_role, 'modify synthesis')
+
     const { synthesis_id, action, data: historyData } = data
 
     const synthesis = await prisma.synthesis.findUnique({
@@ -130,8 +150,11 @@ export async function addSynthesisHistory(
  * Add synthesis error
  */
 export async function addSynthesisError(
-    data: AddSynthesisErrorInput
+    data: AddSynthesisErrorInput,
+    user_role: UserRole
 ): Promise<Synthesis> {
+    requireOwner(user_role, 'modify synthesis')
+
     const { synthesis_id, error, context } = data
 
     const synthesis = await prisma.synthesis.findUnique({

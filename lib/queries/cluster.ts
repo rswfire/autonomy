@@ -16,11 +16,18 @@ import type {
     UpdateClusterSignalInput,
     ClusterFilter,
 } from '../validation/cluster'
+import { requireOwner } from '../utils/permissions'
+import type { UserRole } from '../constants'
 
 /**
  * Create a new cluster
  */
-export async function createCluster(data: CreateClusterInput): Promise<Cluster> {
+export async function createCluster(
+    data: CreateClusterInput,
+    user_role: UserRole
+): Promise<Cluster> {
+    requireOwner(user_role, 'create clusters')
+
     const { parent_cluster_id, cluster_annotations, cluster_metadata, cluster_payload, cluster_tags, ...rest } = data
 
     return await prisma.cluster.create({
@@ -81,7 +88,12 @@ export async function getClusterById(
 /**
  * Update cluster
  */
-export async function updateCluster(data: UpdateClusterInput): Promise<Cluster> {
+export async function updateCluster(
+    data: UpdateClusterInput,
+    user_role: UserRole
+): Promise<Cluster> {
+    requireOwner(user_role, 'update clusters')
+
     const {
         cluster_id,
         cluster_annotations,
@@ -114,7 +126,12 @@ export async function updateCluster(data: UpdateClusterInput): Promise<Cluster> 
 /**
  * Delete cluster
  */
-export async function deleteCluster(cluster_id: string): Promise<Cluster> {
+export async function deleteCluster(
+    cluster_id: string,
+    user_role: UserRole
+): Promise<Cluster> {
+    requireOwner(user_role, 'delete clusters')
+
     return await prisma.cluster.delete({
         where: { cluster_id },
     })
@@ -124,8 +141,11 @@ export async function deleteCluster(cluster_id: string): Promise<Cluster> {
  * Add signal to cluster
  */
 export async function addSignalToCluster(
-    data: AddSignalToClusterInput
+    data: AddSignalToClusterInput,
+    user_role: UserRole
 ): Promise<void> {
+    requireOwner(user_role, 'modify clusters')
+
     const { cluster_id, signal_id, pivot_position, pivot_metadata } = data
 
     await prisma.clusterSignal.create({
@@ -142,8 +162,11 @@ export async function addSignalToCluster(
  * Remove signal from cluster
  */
 export async function removeSignalFromCluster(
-    data: RemoveSignalFromClusterInput
+    data: RemoveSignalFromClusterInput,
+    user_role: UserRole
 ): Promise<void> {
+    requireOwner(user_role, 'modify clusters')
+
     const { cluster_id, signal_id } = data
 
     await prisma.clusterSignal.delete({
@@ -160,8 +183,11 @@ export async function removeSignalFromCluster(
  * Update signal in cluster (position/metadata)
  */
 export async function updateClusterSignal(
-    data: UpdateClusterSignalInput
+    data: UpdateClusterSignalInput,
+    user_role: UserRole
 ): Promise<void> {
+    requireOwner(user_role, 'modify clusters')
+
     const { cluster_id, signal_id, pivot_position, pivot_metadata } = data
 
     await prisma.clusterSignal.update({

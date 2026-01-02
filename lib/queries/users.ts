@@ -1,16 +1,23 @@
 // lib/queries/user.ts
 import { prisma } from '../db'
 import type { User } from '../types'
+import { hashPassword, verifyPassword } from '../utils/password'
+import type { CreateUserInput, UpdateUserInput, LoginInput, ChangePasswordInput } from '../validation/user'
 
 /**
  * Create a new user
  */
-export async function createUser(data: {
-    user_email: string
-    user_name?: string
-}): Promise<User> {
+export async function createUser(data: CreateUserInput): Promise<User> {
+    const { user_password, ...rest } = data
+
+    // Hash password
+    const hashedPassword = await hashPassword(user_password)
+
     return await prisma.user.create({
-        data,
+        data: {
+            ...rest,
+            user_password: hashedPassword,
+        },
     })
 }
 
@@ -33,19 +40,76 @@ export async function getUserByEmail(user_email: string): Promise<User | null> {
 }
 
 /**
+ * Authenticate user with email and password
+ */
+export async function authenticateUser(data: LoginInput): Promise<User | null> {
+    const { user_email, user_password } = data
+
+    const user = await prisma.user.findUnique({
+        where: { user_email },
+    })
+
+    if (!user) {
+        return null
+    }
+
+    const isValid = await verifyPassword(user_password, user.user_password)
+
+    if (!isValid) {
+        return null
+    }
+
+    return user
+}
+
+/**
  * Update user
  */
-export async function updateUser(
-    user_id: string,
-    data: {
-        user_email?: string
-        user_name?: string
+export async function updateUser(data: UpdateUserInput): Promise<User> {
+    const { user_id, user_password, ...rest } = data
+
+    // Hash password if provided
+    const updateData: any = { ...rest }
+    if (user_password) {
+        updateData.user_password = await hashPassword(user_password)
     }
-): Promise<User> {
+
     return await prisma.user.update({
         where: { user_id },
-        data,
+        data: updateData,
     })
+}
+
+/**
+ * Change user password
+ */
+export async function changePassword(data: ChangePasswordInput): Promise<boolean> {
+    const { user_id, current_password, new_password } = data
+
+    const user = await prisma.user.findUnique({
+        where: { user_id },
+    })
+
+    if (!user) {
+        throw new Error('User not found')
+    }
+
+    // Verify current password
+    const isValid = await verifyPassword(current_password, user.user_password)
+
+    if (!isValid) {
+        throw new Error('Current password is incorrect')
+    }
+
+    // Hash and update new password
+    const hashedPassword = await hashPassword(new_password)
+
+    await prisma.user.update({
+        where: { user_id },
+        data: { user_password: hashedPassword },
+    })
+
+    return true
 }
 
 /**
@@ -58,17 +122,20 @@ export async function deleteUser(user_id: string): Promise<User> {
 }
 
 /**
- * List all users
+ * List all users (excluding passwords)
  */
 export async function listUsers(options?: {
     limit?: number
     offset?: number
-}): Promise<User[]> {
-    return await prisma.user.findMany({
+}): Promise<Omit<User, 'user_password'>[]> {
+    const users = await prisma.user.findMany({
         orderBy: { stamp_created: 'desc' },
         take: options?.limit ?? 10,
         skip: options?.offset ?? 0,
     })
+
+    // Strip passwords from response
+    return users.map(({ user_password, ...user }) => user)
 }
 
 /**
@@ -76,4 +143,23 @@ export async function listUsers(options?: {
  */
 export async function countUsers(): Promise<number> {
     return await prisma.user.count()
+}
+
+/**
+ * Get owner user
+ */
+export async function getOwner(): Promise<User | null> {
+    return await prisma.user.findFirst({
+        where: { is_owner: true },
+    })
+}
+
+/**
+ * Check if owner exists
+ */
+export async function ownerExists(): Promise<boolean> {
+    const count = await prisma.user.count({
+        where: { is_owner: true },
+    })
+    return count > 0
 }
