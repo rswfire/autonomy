@@ -75,6 +75,7 @@ export function SiteNavigation({ onClose }: { onClose?: () => void }) {
                 { name: 'Database Schema', href: '/docs/architecture/database-schema', icon: 'Database' },
                 { name: 'Multi-Tenancy', href: '/docs/architecture/multi-tenancy', icon: 'Users' },
                 { name: 'Authentication', href: '/docs/architecture/authentication', icon: 'Shield' },
+                { name: 'Autonomy CLI', href: '/docs/architecture/cli', icon: 'Settings' },
             ],
         },
         {

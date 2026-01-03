@@ -31,3 +31,5 @@ yarn-error.log*
 .vscode/
 
 prisma/schema.prisma
+.autonomy.json
+signals-import-*.json
