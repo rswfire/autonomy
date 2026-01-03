@@ -56,30 +56,46 @@ export default function HomePage() {
                 </div>
 
                 {/* Features Grid */}
-                <div className="grid md:grid-cols-3 gap-8 mb-16">
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="text-3xl mb-4"><Icon name="SquareActivity" size={30} className="text-teal-400" /></div>
+                <div className="grid md:grid-cols-4 gap-8 mb-16">
+                    <Link href="/docs/concepts/signals" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                        <div className="text-3xl mb-4">
+                            <Icon name="SquareActivity" size={30} className="text-teal-400" />
+                        </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">Signals</h3>
                         <p className="text-gray-600">
                             Atomic units of lived data. Photos, videos, audio, text, locations — timestamped and geolocated.
                         </p>
-                    </div>
+                    </Link>
 
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="text-3xl mb-4"><Icon name="SquareAsterisk" size={30} className="text-teal-400" /></div>
+                    <Link href="/docs/concepts/clusters" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                        <div className="text-3xl mb-4">
+                            <Icon name="SquareCode" size={30} className="text-teal-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Clusters</h3>
+                        <p className="text-gray-600">
+                            Hierarchical groupings of signals based on time, space, or theme.
+                        </p>
+                    </Link>
+
+                    <Link href="/docs/concepts/synthesis" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                        <div className="text-3xl mb-4">
+                            <Icon name="SquareAsterisk" size={30} className="text-teal-400" />
+                        </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">Synthesis</h3>
                         <p className="text-gray-600">
                             AI-powered pattern detection across signals. Mirror, Myth, and Narrative reflections without reframing.
                         </p>
-                    </div>
+                    </Link>
 
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="text-3xl mb-4"><Icon name="SquareLibrary" size={30} className="text-teal-400" /></div>
+                    <Link href="/docs/concepts/realms" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                        <div className="text-3xl mb-4">
+                            <Icon name="SquareLibrary" size={30} className="text-teal-400" />
+                        </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">Realms</h3>
                         <p className="text-gray-600">
                             Sovereign territories for your signals. Private by default. You control visibility and access.
                         </p>
-                    </div>
+                    </Link>
                 </div>
 
                 {/* CTA Buttons */}
