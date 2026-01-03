@@ -22,4 +22,4 @@ fi
 
 echo "✅ Build successful"
 echo "Commit: $(git rev-parse --short HEAD)"
-systemctl restart builtwithautonomy
+systemctl --user restart builtwithautonomy
