@@ -3,6 +3,7 @@
 require("dotenv").config();
 
 const fs = require("fs");
+const path = require("path");
 
 const dbUrl = process.env.DATABASE_URL;
 
@@ -213,6 +214,11 @@ model User {
   @@index([stamp_created], map: "idx_user_stamp-created")
 }
 `;
+
+const prismaDir = path.join(__dirname, '..', 'prisma');
+if (!fs.existsSync(prismaDir)) {
+    fs.mkdirSync(prismaDir, { recursive: true });
+}
 
 fs.writeFileSync("prisma/schema.prisma", baseSchema);
 console.log(`Generated schema for ${isPostgres ? "PostgreSQL" : "MySQL or compatible database"}.`);
