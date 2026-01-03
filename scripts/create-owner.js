@@ -127,26 +127,46 @@ async function createOwner() {
         console.log('\n🔐 Hashing password...')
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        // Create user
-        console.log('📝 Creating owner account...')
-        const { ulid } = require('ulid')
-        const user = await prisma.user.create({
-            data: {
-                user_id: ulid().toUpperCase(),
-                user_email: email,
-                user_name: name || null,
-                user_password: hashedPassword,
-                user_role: 'OWNER',
-                is_owner: true,
-            },
+        // Create user and default realm in transaction
+        console.log('📝 Creating owner account and default realm...')
+
+        const result = await prisma.$transaction(async (tx) => {
+            // Create user
+            const user = await tx.user.create({
+                data: {
+                    user_id: ulid(),
+                    user_email: email,
+                    user_name: name || null,
+                    user_password: hashedPassword,
+                    user_role: 'OWNER',
+                    is_owner: true,
+                },
+            })
+
+            // Create default private realm
+            const realm = await tx.realm.create({
+                data: {
+                    realm_id: ulid(),
+                    user_id: user.user_id,
+                    realm_type: 'PRIVATE',
+                    realm_name: 'My Realm',
+                    flag_registry: false,
+                },
+            })
+
+            return { user, realm }
         })
 
         console.log('\n✅ Owner account created successfully!\n')
-        console.log(`User ID: ${user.user_id}`)
-        console.log(`Email: ${user.user_email}`)
-        console.log(`Name: ${user.user_name || '(not set)'}`)
-        console.log(`Role: ${user.user_role}`)
-        console.log(`Created: ${user.stamp_created}`)
+        console.log(`User ID: ${result.user.user_id}`)
+        console.log(`Email: ${result.user.user_email}`)
+        console.log(`Name: ${result.user.user_name || '(not set)'}`)
+        console.log(`Role: ${result.user.user_role}`)
+        console.log(`Created: ${result.user.stamp_created}`)
+        console.log('\n✅ Default realm created!\n')
+        console.log(`Realm ID: ${result.realm.realm_id}`)
+        console.log(`Realm Name: ${result.realm.realm_name}`)
+        console.log(`Realm Type: ${result.realm.realm_type}`)
         console.log('\n')
 
     } catch (error) {
