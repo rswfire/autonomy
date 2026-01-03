@@ -1,3 +1,4 @@
+// app/api/admin/auth/check/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAPI  } from '@/lib/utils/auth'
 

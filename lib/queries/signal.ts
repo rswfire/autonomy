@@ -53,7 +53,14 @@ export async function createSignal(
         throw new Error('User does not have access to this realm')
     }
 
-    const { coordinates, signal_metadata, signal_payload, signal_tags, ...rest } = data
+    const {
+        coordinates,
+        signal_metadata,
+        signal_payload,
+        signal_tags,
+        stamp_imported,
+        ...rest
+    } = data
 
     // Handle geospatial data based on DB type
     const geoData = coordinates
@@ -70,6 +77,13 @@ export async function createSignal(
             }
         : {}
 
+    // Initialize history
+    const signal_history = [{
+        timestamp: new Date().toISOString(),
+        action: 'created',
+        user_id: userId,
+    }] as Prisma.InputJsonValue
+
     return await prisma.signal.create({
         data: {
             signal_id: ulid(),
@@ -78,6 +92,8 @@ export async function createSignal(
             ...(signal_metadata && { signal_metadata: signal_metadata as Prisma.InputJsonValue }),
             ...(signal_payload && { signal_payload: signal_payload as Prisma.InputJsonValue }),
             ...(signal_tags && { signal_tags: signal_tags as Prisma.InputJsonValue }),
+            signal_history,
+            ...(stamp_imported && { stamp_imported }),
         },
     })
 }
@@ -124,7 +140,17 @@ export async function updateSignal(
     data: UpdateSignalInput,
     userId: string
 ): Promise<Signal> {
-    const { signal_id, coordinates, signal_metadata, signal_payload, signal_tags, signal_embedding, ...rest } = data
+    const {
+        signal_id,
+        coordinates,
+        signal_metadata,
+        signal_payload,
+        signal_tags,
+        signal_embedding,
+        signal_history,
+        signal_annotations,
+        ...rest
+    } = data
 
     // Verify user owns the realm this signal belongs to
     const signal = await prisma.signal.findUnique({
@@ -150,6 +176,22 @@ export async function updateSignal(
             }
         : {}
 
+    // Append to history if provided, otherwise add update entry
+    let updatedHistory = signal.signal_history as any[] || []
+    if (signal_history) {
+        updatedHistory = signal_history as any[]
+    } else {
+        const changes = Object.keys(rest).filter(key => rest[key as keyof typeof rest] !== undefined)
+        if (changes.length > 0) {
+            updatedHistory.push({
+                timestamp: new Date().toISOString(),
+                action: 'edited',
+                user_id: userId,
+                fields: changes,
+            })
+        }
+    }
+
     return await prisma.signal.update({
         where: { signal_id },
         data: {
@@ -159,6 +201,8 @@ export async function updateSignal(
             ...(signal_payload !== undefined && { signal_payload: signal_payload as Prisma.InputJsonValue }),
             ...(signal_tags !== undefined && { signal_tags: signal_tags as Prisma.InputJsonValue }),
             ...(signal_embedding !== undefined && { signal_embedding: signal_embedding as Prisma.InputJsonValue }),
+            ...(signal_annotations !== undefined && { signal_annotations: signal_annotations as Prisma.InputJsonValue }),
+            signal_history: updatedHistory as Prisma.InputJsonValue,
         },
     })
 }
@@ -199,9 +243,12 @@ export async function querySignals(
 
     const {
         signal_type,
+        signal_context,
         signal_author,
         signal_status,
         signal_visibility,
+        temperature_min,
+        temperature_max,
         created_after,
         created_before,
         imported_after,
@@ -218,13 +265,21 @@ export async function querySignals(
 
     // Build where clause
     const where: any = {
-        realm_id: { in: userRealmIds },  // Realm filter replaces role-based visibility
+        realm_id: { in: userRealmIds },
     }
 
     if (signal_type) where.signal_type = signal_type
+    if (signal_context) where.signal_context = signal_context
     if (signal_author) where.signal_author = signal_author
     if (signal_status) where.signal_status = signal_status
     if (signal_visibility) where.signal_visibility = signal_visibility
+
+    // Temperature range
+    if (temperature_min !== undefined || temperature_max !== undefined) {
+        where.signal_temperature = {}
+        if (temperature_min !== undefined) where.signal_temperature.gte = temperature_min
+        if (temperature_max !== undefined) where.signal_temperature.lte = temperature_max
+    }
 
     // Date filters
     if (created_after || created_before) {
@@ -335,6 +390,30 @@ export async function getSignalsByType(
 }
 
 /**
+ * Get signals by context (realm-scoped)
+ */
+export async function getSignalsByContext(
+    signal_context: string,
+    userId: string,
+    options?: {
+        limit?: number
+        offset?: number
+    }
+): Promise<Signal[]> {
+    const userRealmIds = await getUserRealmIds(userId)
+
+    return await prisma.signal.findMany({
+        where: {
+            signal_context,
+            realm_id: { in: userRealmIds },
+        },
+        orderBy: { stamp_created: 'desc' },
+        take: options?.limit ?? 10,
+        skip: options?.offset ?? 0,
+    })
+}
+
+/**
  * Get signals by visibility (realm-scoped)
  */
 export async function getSignalsByVisibility(
@@ -353,6 +432,34 @@ export async function getSignalsByVisibility(
             realm_id: { in: userRealmIds },
         },
         orderBy: { stamp_created: 'desc' },
+        take: options?.limit ?? 10,
+        skip: options?.offset ?? 0,
+    })
+}
+
+/**
+ * Get signals by temperature range (realm-scoped)
+ */
+export async function getSignalsByTemperature(
+    temperature_min: number,
+    temperature_max: number,
+    userId: string,
+    options?: {
+        limit?: number
+        offset?: number
+    }
+): Promise<Signal[]> {
+    const userRealmIds = await getUserRealmIds(userId)
+
+    return await prisma.signal.findMany({
+        where: {
+            realm_id: { in: userRealmIds },
+            signal_temperature: {
+                gte: temperature_min,
+                lte: temperature_max,
+            },
+        },
+        orderBy: { signal_temperature: 'desc' },
         take: options?.limit ?? 10,
         skip: options?.offset ?? 0,
     })
@@ -394,6 +501,53 @@ export async function countSignalsByStatus(
 
     return results.reduce((acc, item) => {
         acc[item.signal_status] = item._count
+        return acc
+    }, {} as Record<string, number>)
+}
+
+/**
+ * Count signals by type (realm-scoped)
+ */
+export async function countSignalsByType(
+    userId: string
+): Promise<Record<string, number>> {
+    const userRealmIds = await getUserRealmIds(userId)
+
+    const results = await prisma.signal.groupBy({
+        by: ['signal_type'],
+        where: {
+            realm_id: { in: userRealmIds },
+        },
+        _count: true,
+    })
+
+    return results.reduce((acc, item) => {
+        acc[item.signal_type] = item._count
+        return acc
+    }, {} as Record<string, number>)
+}
+
+/**
+ * Count signals by context (realm-scoped)
+ */
+export async function countSignalsByContext(
+    userId: string
+): Promise<Record<string, number>> {
+    const userRealmIds = await getUserRealmIds(userId)
+
+    const results = await prisma.signal.groupBy({
+        by: ['signal_context'],
+        where: {
+            realm_id: { in: userRealmIds },
+            signal_context: { not: null },
+        },
+        _count: true,
+    })
+
+    return results.reduce((acc, item) => {
+        if (item.signal_context) {
+            acc[item.signal_context] = item._count
+        }
         return acc
     }, {} as Record<string, number>)
 }

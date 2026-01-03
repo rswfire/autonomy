@@ -13,7 +13,7 @@ import { Textarea } from '../ui/Textarea'
 import { Select } from '../ui/Select'
 import { JsonEditor } from './JsonEditor'
 import { Controller } from 'react-hook-form'
-import { SIGNAL_TYPES, SIGNAL_STATUS, SIGNAL_VISIBILITY } from '@/lib/constants'
+import { SIGNAL_TYPES, SIGNAL_CONTEXT, SIGNAL_STATUS, SIGNAL_VISIBILITY, DEFAULTS } from '@/lib/constants'
 import type { Realm } from '@/lib/types'
 
 interface SignalFormProps {
@@ -29,13 +29,10 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
     const [realms, setRealms] = useState<Realm[]>([])
     const [loadingRealms, setLoadingRealms] = useState(true)
 
-    // Determine database type from defaultValues instead
+    // Determine database type from defaultValues
     const usePostgres = useMemo(() => {
-        // If editing and has signal_location field, it's postgres
         if (defaultValues?.signal_location !== undefined) return true
-        // If editing and has lat/lng fields, it's MySQL
         if (defaultValues?.signal_latitude !== undefined || defaultValues?.signal_longitude !== undefined) return false
-        // Default: check if postgres via environment (client-side safe check)
         return typeof window !== 'undefined' ? false : process.env.NEXT_PUBLIC_USE_POSTGRES === 'true'
     }, [defaultValues])
 
@@ -46,15 +43,19 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
         signal_tags: defaultValues.signal_tags ? JSON.stringify(defaultValues.signal_tags, null, 2) : '',
         signal_location: defaultValues.signal_location ? JSON.stringify(defaultValues.signal_location, null, 2) : '',
     } : {
-        realm_id: '', // Will be set when realms load
-        signal_type: 'TEXT',
-        signal_status: 'PENDING',
-        signal_visibility: 'PUBLIC',
+        realm_id: '',
+        signal_type: 'DOCUMENT',
+        signal_context: DEFAULTS.SIGNAL_CONTEXT,
+        signal_status: DEFAULTS.SIGNAL_STATUS,
+        signal_visibility: DEFAULTS.SIGNAL_VISIBILITY,
+        signal_temperature: DEFAULTS.SIGNAL_TEMPERATURE,
     }
 
-    const { register, control, handleSubmit, setValue, formState: { errors } } = useForm({
+    const { register, control, handleSubmit, setValue, watch, formState: { errors } } = useForm({
         defaultValues: formDefaults,
     })
+
+    const signalType = watch('signal_type')
 
     // Load user's realms
     useEffect(() => {
@@ -66,7 +67,6 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
                 const data = await res.json()
                 setRealms(data)
 
-                // Set first realm as default if creating new signal
                 if (mode === 'create' && data.length > 0 && !defaultValues?.realm_id) {
                     setValue('realm_id', data[0].realm_id)
                 }
@@ -84,8 +84,9 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
         setError(null)
 
         try {
-            // Parse JSON fields
             const processedData = { ...data }
+
+                // Parse JSON fields
             ;['signal_metadata', 'signal_payload', 'signal_tags', 'signal_location'].forEach(field => {
                 if (processedData[field] && typeof processedData[field] === 'string') {
                     try {
@@ -151,7 +152,7 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
                     <FormField label="Realm" name="realm_id" required error={errors.realm_id?.message as string}>
                         <Select
                             {...register('realm_id', { required: 'Realm is required' })}
-                            disabled={mode === 'edit'} // Can't change realm after creation
+                            disabled={mode === 'edit'}
                         >
                             <option value="">Select Realm</option>
                             {realms.map(realm => (
@@ -169,14 +170,25 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
                 </FormSection>
 
                 <FormSection title="Core Information" description="Basic signal details">
-                    <FormField label="Type" name="signal_type" required error={errors.signal_type?.message as string}>
-                        <Select {...register('signal_type', { required: 'Type is required' })}>
-                            <option value="">Select Type</option>
-                            {SIGNAL_TYPES.map(type => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </Select>
-                    </FormField>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField label="Type" name="signal_type" required error={errors.signal_type?.message as string}>
+                            <Select {...register('signal_type', { required: 'Type is required' })}>
+                                <option value="">Select Type</option>
+                                {SIGNAL_TYPES.map(type => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </Select>
+                        </FormField>
+
+                        <FormField label="Context" name="signal_context" error={errors.signal_context?.message as string}>
+                            <Select {...register('signal_context')}>
+                                <option value="">Select Context (Optional)</option>
+                                {SIGNAL_CONTEXT.map(ctx => (
+                                    <option key={ctx} value={ctx}>{ctx}</option>
+                                ))}
+                            </Select>
+                        </FormField>
+                    </div>
 
                     <FormField label="Title" name="signal_title" required error={errors.signal_title?.message as string}>
                         <Input
@@ -193,12 +205,29 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
                         />
                     </FormField>
 
-                    <FormField label="Author" name="signal_author" required error={errors.signal_author?.message as string}>
-                        <Input
-                            {...register('signal_author', { required: 'Author is required' })}
-                            placeholder="Author name"
-                        />
-                    </FormField>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField label="Author" name="signal_author" required error={errors.signal_author?.message as string}>
+                            <Input
+                                {...register('signal_author', { required: 'Author is required' })}
+                                placeholder="Author name"
+                            />
+                        </FormField>
+
+                        <FormField
+                            label="Temperature"
+                            name="signal_temperature"
+                            description="Importance: -1.0 (low) to 1.0 (critical)"
+                        >
+                            <Input
+                                type="number"
+                                step="0.1"
+                                min="-1.0"
+                                max="1.0"
+                                {...register('signal_temperature', { valueAsNumber: true })}
+                                placeholder="0.0"
+                            />
+                        </FormField>
+                    </div>
                 </FormSection>
 
                 <FormSection title="Location" description="Geospatial coordinates (optional)">
@@ -267,8 +296,15 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
                     </div>
                 </FormSection>
 
-                <FormSection title="Data Payloads" description="JSON data structures">
-                    <FormField label="Metadata (JSON)" name="signal_metadata">
+                <FormSection
+                    title="Data Payloads"
+                    description={`Type-specific data for ${signalType || 'signal'}`}
+                >
+                    <FormField
+                        label="Metadata (JSON)"
+                        name="signal_metadata"
+                        description="Technical metadata (EXIF, duration, file size, etc.)"
+                    >
                         <Controller
                             name="signal_metadata"
                             control={control}
@@ -284,7 +320,11 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
                         />
                     </FormField>
 
-                    <FormField label="Payload (JSON)" name="signal_payload">
+                    <FormField
+                        label="Payload (JSON)"
+                        name="signal_payload"
+                        description="Content data (file paths, text content, transcripts)"
+                    >
                         <Controller
                             name="signal_payload"
                             control={control}
@@ -300,7 +340,11 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
                         />
                     </FormField>
 
-                    <FormField label="Tags (JSON)" name="signal_tags">
+                    <FormField
+                        label="Tags (JSON)"
+                        name="signal_tags"
+                        description="Array of tags (initially from synthesis)"
+                    >
                         <Controller
                             name="signal_tags"
                             control={control}

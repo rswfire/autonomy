@@ -15,7 +15,7 @@ export async function proxy(request: NextRequest) {
     }
 
     if (path.startsWith('/admin')) {
-        const token = request.cookies.get('admin_token')?.value
+        const token = request.cookies.get('auth_token')?.value
 
         if (!token) {
             return NextResponse.redirect(new URL('/admin/login', request.url))

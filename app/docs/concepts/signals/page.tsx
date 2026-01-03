@@ -12,7 +12,7 @@ export default function SignalsPage() {
 
             <h1 className="text-4xl font-bold text-gray-900 mb-4">📡 Signals</h1>
             <p className="text-xl text-gray-600 mb-12">
-                Atomic units of lived data. Photos, videos, audio, text, locations — timestamped and geolocated.
+                Atomic units of lived data. The foundation of pattern recognition and synthesis.
             </p>
 
             {/* What is a Signal */}
@@ -20,68 +20,85 @@ export default function SignalsPage() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">What is a Signal?</h2>
                 <div className="prose prose-lg text-gray-700 space-y-4">
                     <p>
-                        A signal is the atomic unit of lived data in Autonomy. It represents a single moment of documented reality:
-                    </p>
-                    <ul className="space-y-2">
-                        <li>A photo you took</li>
-                        <li>A video you recorded</li>
-                        <li>An audio note you captured</li>
-                        <li>A text fragment you wrote</li>
-                        <li>A location you marked</li>
-                    </ul>
-                    <p className="mt-6">
-                        Every signal is <strong>timestamped</strong> (when it was created or imported) and optionally <strong>geolocated</strong> (where it was captured).
+                        A signal is the atomic unit of lived data in Autonomy. It represents a single moment of documented reality — raw capture that forms the input layer for AI-powered pattern detection and synthesis.
                     </p>
                     <p>
-                        Signals are not content. They're not posts. They're documented moments of your lived reality, preserved with full structural fidelity.
+                        Signals are not content. They're not posts. They're timestamped documentation, optionally geolocated, preserved with full structural fidelity.
+                    </p>
+                    <p className="mt-6">
+                        Every signal belongs to a <strong>realm</strong> and has a <strong>type</strong> (the medium) and optional <strong>context</strong> (the intent).
                     </p>
                 </div>
             </section>
 
             {/* Signal Types */}
             <section className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Signal Types</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Signal Types (Medium)</h2>
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">TEXT</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">DOCUMENT</h3>
                         <p className="text-gray-600">
-                            Written notes, journal entries, thoughts, observations. Stored as plain text or structured data.
+                            Text in any form — writing, notes, code, references. The most common signal type.
                         </p>
                     </div>
 
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">PHOTO</h3>
                         <p className="text-gray-600">
-                            Images captured or imported. Preserved with EXIF data when available.
+                            Visual capture. Images preserved with technical metadata when available.
                         </p>
                     </div>
 
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">VIDEO</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">TRANSMISSION</h3>
                         <p className="text-gray-600">
-                            Video recordings. Can include YouTube URLs or uploaded files.
+                            Audio or video recordings. YouTube videos. Podcast episodes. Processed via transcript.
                         </p>
                     </div>
 
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">AUDIO</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">CONVERSATION</h3>
                         <p className="text-gray-600">
-                            Voice notes, recordings, ambient sound captures.
+                            Dialogue logs. AI chat transcripts. Co-created content from back-and-forth exchange.
                         </p>
                     </div>
+                </div>
+            </section>
 
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">LOCATION</h3>
-                        <p className="text-gray-600">
-                            Geographic markers. Coordinates with optional descriptions.
-                        </p>
+            {/* Signal Context */}
+            <section className="mb-12">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Signal Context (Intent)</h2>
+                <p className="text-gray-700 mb-6">
+                    Context describes <strong>why</strong> a signal was created. It's optional but provides valuable metadata for AI synthesis and pattern recognition.
+                </p>
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-1">CAPTURE</h3>
+                        <p className="text-sm text-gray-600">Default — generic documentation, intent to be determined</p>
                     </div>
-
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">DOCUMENT</h3>
-                        <p className="text-gray-600">
-                            PDFs, markdown files, structured documents.
-                        </p>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-1">NOTE</h3>
+                        <p className="text-sm text-gray-600">Quick capture, ephemeral thought</p>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-1">JOURNAL</h3>
+                        <p className="text-sm text-gray-600">Reflective writing, daily log</p>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-1">CODE</h3>
+                        <p className="text-sm text-gray-600">Technical artifact, implementation</p>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-1">REFERENCE</h3>
+                        <p className="text-sm text-gray-600">External source, citation</p>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-1">OBSERVATION</h3>
+                        <p className="text-sm text-gray-600">Field note, documented reality</p>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-1">ARTIFACT</h3>
+                        <p className="text-sm text-gray-600">Created work, finished piece</p>
                     </div>
                 </div>
             </section>
@@ -102,19 +119,27 @@ export default function SignalsPage() {
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_type</code>
-                            <span className="col-span-2 text-gray-700">Type of signal (TEXT, PHOTO, VIDEO, etc.)</span>
+                            <span className="col-span-2 text-gray-700">Medium: DOCUMENT, PHOTO, TRANSMISSION, CONVERSATION</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_context</code>
+                            <span className="col-span-2 text-gray-700">Intent: CAPTURE, NOTE, JOURNAL, CODE, REFERENCE, OBSERVATION, ARTIFACT</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_title</code>
-                            <span className="col-span-2 text-gray-700">Brief title or subject</span>
+                            <span className="col-span-2 text-gray-700">Brief title (initially from synthesis)</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_description</code>
-                            <span className="col-span-2 text-gray-700">Longer description or content</span>
+                            <span className="col-span-2 text-gray-700">Longer description (initially from synthesis)</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_author</code>
                             <span className="col-span-2 text-gray-700">Who created/captured this signal</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_temperature</code>
+                            <span className="col-span-2 text-gray-700">Importance (-1.0 to 1.0)</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_visibility</code>
@@ -126,47 +151,55 @@ export default function SignalsPage() {
                     <div className="space-y-3 text-sm">
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">stamp_created</code>
-                            <span className="col-span-2 text-gray-700">When signal was created in the system</span>
+                            <span className="col-span-2 text-gray-700">When the original content was captured</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">stamp_imported</code>
-                            <span className="col-span-2 text-gray-700">When the original content was captured</span>
+                            <span className="col-span-2 text-gray-700">When signal was created in the system</span>
                         </div>
                     </div>
 
-                    <h3 className="font-semibold text-gray-900 mb-3 mt-6">Geospatial Data</h3>
+                    <h3 className="font-semibold text-gray-900 mb-3 mt-6">Geospatial Data (Optional)</h3>
                     <div className="space-y-3 text-sm">
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_location</code>
                             <span className="col-span-2 text-gray-700">PostGIS Point (PostgreSQL)</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
-                            <code className="text-blue-600">signal_latitude</code>
-                            <span className="col-span-2 text-gray-700">Latitude (MySQL)</span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <code className="text-blue-600">signal_longitude</code>
-                            <span className="col-span-2 text-gray-700">Longitude (MySQL)</span>
+                            <code className="text-blue-600">signal_latitude / signal_longitude</code>
+                            <span className="col-span-2 text-gray-700">Decimal coordinates (MySQL)</span>
                         </div>
                     </div>
 
-                    <h3 className="font-semibold text-gray-900 mb-3 mt-6">Metadata & Payload</h3>
+                    <h3 className="font-semibold text-gray-900 mb-3 mt-6">Metadata & Payload (Type-Specific)</h3>
                     <div className="space-y-3 text-sm">
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_metadata</code>
-                            <span className="col-span-2 text-gray-700">Structured data (JSON)</span>
+                            <span className="col-span-2 text-gray-700">Technical metadata (EXIF data, duration, file size, etc.)</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_payload</code>
-                            <span className="col-span-2 text-gray-700">Full content data (JSON)</span>
+                            <span className="col-span-2 text-gray-700">Content data (file paths, text content, transcripts)</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_tags</code>
-                            <span className="col-span-2 text-gray-700">Array of tags for organization</span>
+                            <span className="col-span-2 text-gray-700">Array of tags (initially from synthesis)</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_embedding</code>
                             <span className="col-span-2 text-gray-700">Vector embedding for semantic search</span>
+                        </div>
+                    </div>
+
+                    <h3 className="font-semibold text-gray-900 mb-3 mt-6">History & Annotations</h3>
+                    <div className="space-y-3 text-sm">
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_history</code>
+                            <span className="col-span-2 text-gray-700">Audit trail of edits and changes</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_annotations</code>
+                            <span className="col-span-2 text-gray-700">User notes and synthesis feedback</span>
                         </div>
                     </div>
                 </div>
@@ -212,37 +245,23 @@ export default function SignalsPage() {
                 <div className="prose prose-lg text-gray-700 space-y-4">
                     <ol className="space-y-4">
                         <li>
-                            <strong>Capture</strong> — Signal is created or imported into Autonomy
+                            <strong>Capture</strong> — Signal is created with minimal data: type, context, raw payload
                         </li>
                         <li>
-                            <strong>Storage</strong> — Stored in your realm with full metadata
+                            <strong>Synthesis</strong> — AI processes signal and generates METADATA/SURFACE (title, description, tags)
                         </li>
                         <li>
-                            <strong>Clustering</strong> — Can be grouped with related signals
+                            <strong>Enrichment</strong> — Title/description/tags copied to signal table for display
                         </li>
                         <li>
-                            <strong>Synthesis</strong> — AI analysis generates reflections (Mirror, Myth, Narrative)
+                            <strong>Clustering</strong> — Can be grouped with related signals in clusters
                         </li>
                         <li>
-                            <strong>Retrieval</strong> — Search, filter, and access based on time, location, tags, or semantic similarity
+                            <strong>Deep Synthesis</strong> — STRUCTURE, PATTERNS analysis for cross-signal insights
                         </li>
-                    </ol>
-                </div>
-            </section>
-
-            {/* Creating Signals */}
-            <section className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Creating Your First Signal</h2>
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-6">
-                    <ol className="space-y-3 text-gray-700">
-                        <li>1. Navigate to <strong>Signals</strong> in the admin panel</li>
-                        <li>2. Click <strong>Create Signal</strong></li>
-                        <li>3. Select your <strong>realm</strong> (defaults to your private realm)</li>
-                        <li>4. Choose a <strong>signal type</strong></li>
-                        <li>5. Add <strong>title</strong> and <strong>description</strong></li>
-                        <li>6. Optionally add <strong>location</strong>, <strong>tags</strong>, and <strong>metadata</strong></li>
-                        <li>7. Set <strong>visibility</strong> level</li>
-                        <li>8. Save</li>
+                        <li>
+                            <strong>Reflection</strong> — MIRROR, MYTH, NARRATIVE generation at cluster level
+                        </li>
                     </ol>
                 </div>
             </section>
@@ -252,9 +271,9 @@ export default function SignalsPage() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Key Principles</h2>
                 <div className="space-y-4">
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="font-semibold text-gray-900 mb-2">Signals are immutable by default</h3>
+                        <h3 className="font-semibold text-gray-900 mb-2">Signals are input for pattern recognition</h3>
                         <p className="text-gray-600">
-                            Once created, the core data doesn't change. You can add metadata, tags, and synthesis, but the original signal remains preserved.
+                            Not content for consumption. Raw documentation of lived reality that AI synthesis processes to identify patterns and generate insights.
                         </p>
                     </div>
 
@@ -266,15 +285,22 @@ export default function SignalsPage() {
                     </div>
 
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="font-semibold text-gray-900 mb-2">Signals are not content</h3>
+                        <h3 className="font-semibold text-gray-900 mb-2">Title/description/tags come from synthesis</h3>
                         <p className="text-gray-600">
-                            They're documented moments of lived reality, not posts optimized for engagement.
+                            These display fields are initially AI-generated, then user-editable. Changes are tracked in signal_history.
+                        </p>
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 className="font-semibold text-gray-900 mb-2">Location is metadata, not a signal type</h3>
+                        <p className="text-gray-600">
+                            Geographic coordinates attach to any signal. Places are clustering context, not signals themselves.
                         </p>
                     </div>
                 </div>
             </section>
 
-            {/* Next Steps */}
+            {/* Related Concepts */}
             <section>
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Related Concepts</h2>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -290,7 +316,7 @@ export default function SignalsPage() {
 
                     <Link href="/docs/concepts/synthesis" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">🔮 Synthesis</h3>
-                        <p className="text-gray-600">AI-powered pattern detection across signals.</p>
+                        <p className="text-gray-600">AI-powered pattern detection and insight generation.</p>
                     </Link>
 
                     <Link href="/docs/getting-started" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">

@@ -5,6 +5,7 @@ import { Label } from '../ui/Label'
 interface FormFieldProps {
     label: string
     name: string
+    description?: string
     required?: boolean
     error?: string
     hint?: string

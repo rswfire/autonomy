@@ -89,18 +89,22 @@ model Signal {
   realm               Realm    @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
 
   signal_type         String   @db.VarChar(50)
+  signal_context      String?  @db.VarChar(50)
   signal_title        String   @db.VarChar(100)
   signal_description  String?  @db.Text
   signal_author       String   @db.VarChar(50)
+  signal_temperature  Decimal? @default(0.0) @db.Decimal(3, 2)
 
   ${isPostgres ? 'signal_location Unsupported("geography(Point, 4326)")? @map("signal_location")' : 'signal_latitude Decimal? @db.Decimal(10, 8)\n  signal_longitude Decimal? @db.Decimal(11, 8)'}
 
   signal_status      String  @default("PENDING")
   signal_visibility  String  @default("PUBLIC")
 
-  signal_metadata  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  signal_payload   Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  signal_tags      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_metadata     Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_payload      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_tags         Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_history      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_annotations  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
 
   ${isPostgres
     ? 'signal_embedding Unsupported("vector(1536)")?'
@@ -109,7 +113,7 @@ model Signal {
 
   stamp_created   DateTime   @default(now())
   stamp_updated   DateTime?  @updatedAt
-  stamp_imported  DateTime?  @default(now())
+  stamp_imported  DateTime?
 
   synthesis    Synthesis[]      @relation("SynthesisToSignal")
   clusters     ClusterSignal[]
@@ -117,8 +121,10 @@ model Signal {
   @@map("signals")
   @@index([realm_id], map: "idx_signal_realm-id")
   @@index([signal_type], map: "idx_signal-type")
+  @@index([signal_context], map: "idx_signal-context")
   @@index([signal_title], map: "idx_signal-title")
   @@index([signal_author], map: "idx_signal-author")
+  @@index([signal_temperature], map: "idx_signal-temperature")
   @@index([signal_status], map: "idx_signal-status")
   @@index([signal_visibility], map: "idx_signal-visibility")
   ${!isPostgres ? '@@index([signal_latitude], map: "idx_signal_signal-latitude")' : ''}
