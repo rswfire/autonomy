@@ -11,6 +11,7 @@ import {
     Home,
     Lightbulb,
     LucideProps,
+    Menu,
     Network,
     Plus,
     Radio,
@@ -27,6 +28,7 @@ import {
     SquareStack,
     SquareTerminal,
     SquareUserRound,
+    TreeDeciduous,
     Users,
 } from 'lucide-react';
 
@@ -41,6 +43,7 @@ const iconMap = {
     HelpCircle,
     Home,
     Lightbulb,
+    Menu,
     Network,
     Plus,
     Radio,
@@ -57,6 +60,7 @@ const iconMap = {
     SquareStack,
     SquareTerminal,
     SquareUserRound,
+    TreeDeciduous,
     Users,
 } as const;
 

@@ -16,9 +16,8 @@ interface NavSection {
     items: NavItem[]
 }
 
-export function SiteNavigation() {
+export function SiteNavigation({ onClose }: { onClose?: () => void }) {
     const pathname = usePathname()
-
     const [isOwner, setIsOwner] = useState(false)
     const [userEmail, setUserEmail] = useState<string | null>(null)
 
@@ -27,7 +26,6 @@ export function SiteNavigation() {
             try {
                 const response = await fetch('/api/admin/auth/check')
                 const data = await response.json()
-
                 setIsOwner(data.authenticated)
                 setUserEmail(data.email ?? null)
             } catch {
@@ -53,9 +51,7 @@ export function SiteNavigation() {
     const docsSections: NavSection[] = [
         {
             title: 'Getting Started',
-            items: [
-                { name: 'Quick Start', href: '/docs/getting-started', icon: 'Rocket' },
-            ],
+            items: [{ name: 'Quick Start', href: '/docs/getting-started', icon: 'Rocket' }],
         },
         {
             title: 'Core Concepts',
@@ -83,9 +79,7 @@ export function SiteNavigation() {
         },
         {
             title: 'Deployment',
-            items: [
-                { name: 'Self-Hosting', href: '/docs/deployment/self-hosting', icon: 'Server' },
-            ],
+            items: [{ name: 'Self-Hosting', href: '/docs/deployment/self-hosting', icon: 'Server' }],
         },
     ]
 
@@ -109,10 +103,10 @@ export function SiteNavigation() {
             : publicSections
 
     return (
-        <aside className="w-64 bg-gray-900 text-gray-100 flex flex-col">
+        <aside className="w-64 h-full bg-gray-900 text-gray-100 flex flex-col">
             <div className="flex flex-col items-center justify-center border-b border-gray-800 p-4">
                 <Icon name="SquareStack" size={24} className="text-teal-400" />
-                <Link href="/" className="font-mono text-lg font-semibold tracking-tight">
+                <Link href="/" className="font-mono text-lg font-semibold tracking-tight" onClick={onClose}>
                     <span className="text-teal-400">autonomy</span>
                 </Link>
             </div>
@@ -123,6 +117,7 @@ export function SiteNavigation() {
                     <Link
                         href="/admin/logout"
                         className="text-teal-400 hover:underline transition"
+                        onClick={onClose}
                     >
                         Logout
                     </Link>
@@ -139,14 +134,13 @@ export function SiteNavigation() {
                             {section.items.map((item) => {
                                 const isActive =
                                     pathname === item.href ||
-                                    (item.href !== '/' &&
-                                        item.href !== '/docs' &&
-                                        pathname.startsWith(item.href))
+                                    (item.href !== '/' && item.href !== '/docs' && pathname.startsWith(item.href))
 
                                 return (
                                     <Link
                                         key={item.href}
                                         href={item.href}
+                                        onClick={onClose}
                                         className={`flex items-center px-3 py-2.5 rounded-lg transition-colors ${
                                             isActive
                                                 ? 'bg-gray-800 text-teal-400'
@@ -154,9 +148,7 @@ export function SiteNavigation() {
                                         }`}
                                     >
                                         <Icon name={item.icon} size={20} />
-                                        <span className="ml-3 text-sm font-medium">
-                                            {item.name}
-                                        </span>
+                                        <span className="ml-3 text-sm font-medium">{item.name}</span>
                                     </Link>
                                 )
                             })}
