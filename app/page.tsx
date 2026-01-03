@@ -107,7 +107,7 @@ export default function HomePage() {
                         Try Autonomy
                     </Link>
 
-                    <a href="https://github.com/rswfire/builtwithautonomy.com"
+                    <a href="https://github.com/rswfire/autonomy"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-8 py-4 bg-gray-800 text-white rounded-lg hover:bg-gray-900 font-medium text-center transition-colors"

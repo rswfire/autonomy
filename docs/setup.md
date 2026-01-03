@@ -23,7 +23,7 @@
 ### 1. Clone and Install Dependencies
 
 ```bash
-git clone https://github.com/rswfire/builtwithautonomy.com.git
+git clone https://github.com/rswfire/autonomy.git
 cd builtwithautonomy.com
 npm install
 ```

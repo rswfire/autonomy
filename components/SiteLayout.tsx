@@ -84,7 +84,7 @@ export default function ClientLayout({
                                     <Icon name="TreeDeciduous" size={24} className="text-emerald-600" />
                                 </div>
                                 <p className="text-xs text-zinc-500 tracking-wide">
-                                    Built with <Link href="https://github.com/rswfire/builtwithautonomy.com" className="text-stone-900 underline" target="_blank" rel="noopener noreferrer">Autonomy</Link>.
+                                    Built with <Link href="https://github.com/rswfire/autonomy" className="text-stone-900 underline" target="_blank" rel="noopener noreferrer">Autonomy</Link>.
                                 </p>
                                 <p className="text-xs text-zinc-500 tracking-wide">
                                     By <Link href="https://rswfire.com/handshake" className="text-stone-900 underline" target="_blank" rel="noopener noreferrer">Robert Samuel White</Link>.

@@ -38,7 +38,7 @@ export default function GettingStartedPage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">1. Clone the Repository</h3>
                 <div className="bg-gray-900 text-gray-100 p-4 rounded-lg mb-6 overflow-x-auto">
                     <code className="text-sm">
-                        git clone https://github.com/rswfire/builtwithautonomy.com.git<br/>
+                        git clone https://github.com/rswfire/autonomy.git<br/>
                         cd builtwithautonomy.com
                     </code>
                 </div>

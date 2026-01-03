@@ -102,12 +102,12 @@ export default function DocsPage() {
             <section>
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Additional Resources</h2>
                 <div className="grid gap-4">
-                    <a href="https://github.com/rswfire/builtwithautonomy.com" target="_blank" rel="noopener noreferrer" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">
+                    <a href="https://github.com/rswfire/autonomy" target="_blank" rel="noopener noreferrer" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">GitHub Repository</h3>
                         <p className="text-gray-600">View source code, contribute, or report issues.</p>
                     </a>
 
-                    <a href="https://github.com/rswfire/builtwithautonomy.com/blob/main/docs/roadmap.md" target="_blank" rel="noopener noreferrer" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">
+                    <a href="https://github.com/rswfire/autonomy/blob/main/docs/roadmap.md" target="_blank" rel="noopener noreferrer" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">Roadmap</h3>
                         <p className="text-gray-600">Current status and planned features.</p>
                     </a>

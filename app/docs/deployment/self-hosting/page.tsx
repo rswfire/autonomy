@@ -69,7 +69,7 @@ export default function SelfHostingPage() {
                         <h3 className="text-lg font-semibold text-gray-900 mb-3">Step 1: Clone Repository</h3>
                         <div className="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm mb-3">
                             <pre className="whitespace-pre-wrap">
-{`git clone https://github.com/rswfire/builtwithautonomy.com.git
+{`git clone https://github.com/rswfire/autonomy.git
 cd builtwithautonomy.com`}
                             </pre>
                         </div>
@@ -477,7 +477,7 @@ pm2 monit`}
                         <p className="text-gray-600">Your data sovereignty architecture.</p>
                     </Link>
 
-                    <a href="https://github.com/rswfire/builtwithautonomy.com/issues" target="_blank" rel="noopener noreferrer" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">
+                    <a href="https://github.com/rswfire/autonomy/issues" target="_blank" rel="noopener noreferrer" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">Report Issues</h3>
                         <p className="text-gray-600">Found a problem? Let us know on GitHub.</p>
                     </a>
