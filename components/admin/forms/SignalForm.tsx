@@ -18,6 +18,11 @@ import { SIGNAL_TYPES, SIGNAL_CONTEXT, SIGNAL_STATUS, SIGNAL_VISIBILITY, DEFAULT
 import type { Realm } from '@/lib/types'
 import { TagInput } from '../ui/TagInput'
 
+import { DocumentFields } from './signal/DocumentFields'
+import { PhotoFields } from './signal/PhotoFields'
+import { TransmissionFields } from './signal/TransmissionFields'
+import { ConversationFields } from './signal/ConversationFields'
+
 interface SignalFormProps {
     mode: 'create' | 'edit'
     defaultValues?: any
@@ -101,6 +106,97 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
         try {
             const processedData = { ...data }
 
+            // Build signal_payload based on type
+            if (signalType === 'DOCUMENT') {
+                processedData.signal_payload = {
+                    content: data.payload_content,
+                    format: data.payload_format || 'plain',
+                }
+                processedData.signal_metadata = {
+                    word_count: data.metadata_word_count,
+                    character_count: data.metadata_character_count,
+                    language: data.metadata_language,
+                    file_extension: data.metadata_file_extension,
+                    encoding: data.metadata_encoding,
+                    mime_type: data.metadata_mime_type,
+                }
+            } else if (signalType === 'PHOTO') {
+                processedData.signal_payload = {
+                    file_path: data.payload_file_path,
+                    thumbnail_path: data.payload_thumbnail_path,
+                    original_filename: data.payload_original_filename,
+                }
+                processedData.signal_metadata = {
+                    camera: data.metadata_camera,
+                    lens: data.metadata_lens,
+                    iso: data.metadata_iso,
+                    aperture: data.metadata_aperture,
+                    shutter_speed: data.metadata_shutter_speed,
+                    focal_length: data.metadata_focal_length,
+                    width: data.metadata_width,
+                    height: data.metadata_height,
+                    file_size: data.metadata_file_size,
+                    mime_type: data.metadata_mime_type,
+                    color_space: data.metadata_color_space,
+                    timestamp_original: data.metadata_timestamp_original,
+                    gps_altitude: data.metadata_gps_altitude,
+                }
+            } else if (signalType === 'TRANSMISSION') {
+                processedData.signal_payload = {
+                    file_path: data.payload_file_path,
+                    transcript: data.payload_transcript,
+                    timed_transcript: typeof data.payload_timed_transcript === 'string'
+                        ? JSON.parse(data.payload_timed_transcript)
+                        : data.payload_timed_transcript,
+                }
+                processedData.signal_metadata = {
+                    source_type: data.metadata_source_type,
+                    source_url: data.metadata_source_url,
+                    youtube_id: data.metadata_youtube_id,
+                    youtube_channel: data.metadata_youtube_channel,
+                    youtube_published_at: data.metadata_youtube_published_at,
+                    youtube_thumbnail: data.metadata_youtube_thumbnail,
+                    timestamps: typeof data.metadata_timestamps === 'string'
+                        ? JSON.parse(data.metadata_timestamps)
+                        : data.metadata_timestamps,
+                    duration: data.metadata_duration,
+                    bitrate: data.metadata_bitrate,
+                    sample_rate: data.metadata_sample_rate,
+                    channels: data.metadata_channels,
+                    codec: data.metadata_codec,
+                    file_size: data.metadata_file_size,
+                    mime_type: data.metadata_mime_type,
+                    width: data.metadata_width,
+                    height: data.metadata_height,
+                    framerate: data.metadata_framerate,
+                    has_transcript: data.metadata_has_transcript === 'true',
+                    transcript_method: data.metadata_transcript_method,
+                }
+            } else if (signalType === 'CONVERSATION') {
+                processedData.signal_payload = {
+                    messages: data.payload_messages || [],
+                    summary: data.payload_summary,
+                    key_points: data.payload_key_points?.split(',').map((s: string) => s.trim()).filter(Boolean),
+                }
+                processedData.signal_metadata = {
+                    platform: data.metadata_platform,
+                    model: data.metadata_model,
+                    message_count: data.metadata_message_count,
+                    turn_count: data.metadata_turn_count,
+                    duration_minutes: data.metadata_duration_minutes,
+                    total_tokens: data.metadata_total_tokens,
+                    started_at: data.metadata_started_at,
+                    ended_at: data.metadata_ended_at,
+                }
+            }
+
+            // Clean up temporary form fields
+            Object.keys(processedData).forEach(key => {
+                if (key.startsWith('payload_') || key.startsWith('metadata_')) {
+                    delete processedData[key]
+                }
+            })
+
             // Convert lat/lng to appropriate format
             if (latitude && longitude) {
                 if (isPostgres) {
@@ -114,18 +210,14 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                 }
             }
 
-            delete processedData.latitude
-            delete processedData.longitude
-
-            ;['signal_metadata', 'signal_payload', 'signal_tags', 'signal_location'].forEach(field => {
-                if (processedData[field] && typeof processedData[field] === 'string') {
-                    try {
-                        processedData[field] = JSON.parse(processedData[field])
-                    } catch {
-                        // Keep as string if invalid
-                    }
+            // Parse tags
+            if (processedData.signal_tags && typeof processedData.signal_tags === 'string') {
+                try {
+                    processedData.signal_tags = JSON.parse(processedData.signal_tags)
+                } catch {
+                    // Keep as string if invalid
                 }
-            })
+            }
 
             const url = mode === 'create'
                 ? '/api/admin/signals'
@@ -343,49 +435,16 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                 </FormSection>
 
                 <FormSection
-                    title="Data Payloads"
+                    title="Signal Data"
                     description={`Type-specific data for ${signalType || 'signal'}`}
                 >
-                    <FormField
-                        label="Metadata (JSON)"
-                        name="signal_metadata"
-                        description="Technical metadata (EXIF, duration, file size, etc.)"
-                    >
-                        <Controller
-                            name="signal_metadata"
-                            control={control}
-                            render={({ field }) => (
-                                <JsonEditor
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    onBlur={field.onBlur}
-                                    rows={6}
-                                    placeholder='{\n  "key": "value"\n}'
-                                />
-                            )}
-                        />
-                    </FormField>
-
-                    <FormField
-                        label="Payload (JSON)"
-                        name="signal_payload"
-                        description="Content data (file paths, text content, transcripts)"
-                    >
-                        <Controller
-                            name="signal_payload"
-                            control={control}
-                            render={({ field }) => (
-                                <JsonEditor
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    onBlur={field.onBlur}
-                                    rows={6}
-                                    placeholder='{\n  "key": "value"\n}'
-                                />
-                            )}
-                        />
-                    </FormField>
-
+                    {signalType === 'DOCUMENT' && <DocumentFields register={register} />}
+                    {signalType === 'PHOTO' && <PhotoFields register={register} />}
+                    {signalType === 'TRANSMISSION' && <TransmissionFields register={register} control={control} />}
+                    {signalType === 'CONVERSATION' && <ConversationFields register={register} control={control} />}
+                    {!signalType && (
+                        <p className="text-gray-500 italic">Select a signal type to configure data fields</p>
+                    )}
                 </FormSection>
 
                 <div className="flex gap-3 pt-8 border-t border-gray-200">
