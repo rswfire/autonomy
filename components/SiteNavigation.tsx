@@ -39,8 +39,7 @@ export function SiteNavigation() {
             title: 'Main',
             items: [
                 { name: 'Home', href: '/', icon: 'Home' },
-                { name: 'Explore', href: '/explore', icon: 'Compass' },
-                { name: 'Documentation', href: '/docs', icon: 'FileText' },
+                { name: 'Admin', href: '/admin', icon: 'Compass' },
             ],
         },
     ]
@@ -52,7 +51,7 @@ export function SiteNavigation() {
             { name: 'Signals', href: '/admin/signals', icon: 'Radio' },
             { name: 'Clusters', href: '/admin/clusters', icon: 'FolderOpen' },
             { name: 'Synthesis', href: '/admin/synthesis', icon: 'Sparkles' },
-            { name: 'Users', href: '/admin/users', icon: 'Users' },  // Added
+            { name: 'Users', href: '/admin/users', icon: 'Users' },
             { name: 'Settings', href: '/admin/settings', icon: 'Settings' },
         ],
     }
