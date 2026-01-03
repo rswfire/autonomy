@@ -13,7 +13,7 @@ export type GeographyPoint = {
 
 export type EmbeddingVector = number[] // 1536 dimensions for OpenAI ada-002
 
-export const isPostgres = process.env.DATABASE_URL?.startsWith('postgres')
+export const isPostgres: boolean = process.env.DATABASE_URL?.startsWith('postgres') ?? false
 
 export type JsonValue = Prisma.JsonValue
 export type JsonObject = Prisma.JsonObject
