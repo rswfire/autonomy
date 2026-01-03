@@ -11,7 +11,7 @@ export async function GET(
     const params = await context.params
     try {
         const user = await requireAuth()
-        const synthesis = await getSynthesisById(params.id)
+        const synthesis = await getSynthesisById(params.id, user.user_id)
 
         if (!synthesis) {
             return NextResponse.json({ error: 'Synthesis not found' }, { status: 404 })

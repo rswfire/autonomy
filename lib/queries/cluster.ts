@@ -62,15 +62,11 @@ export async function createCluster(
         data: {
             cluster_id: ulid(),
             ...rest,
+            ...(parent_cluster_id && { parent_cluster_id }),  // ← Use unchecked approach
             ...(cluster_annotations && { cluster_annotations: cluster_annotations as Prisma.InputJsonValue }),
             ...(cluster_metadata && { cluster_metadata: cluster_metadata as Prisma.InputJsonValue }),
             ...(cluster_payload && { cluster_payload: cluster_payload as Prisma.InputJsonValue }),
             ...(cluster_tags && { cluster_tags: cluster_tags as Prisma.InputJsonValue }),
-            ...(parent_cluster_id && {
-                parent_cluster: {
-                    connect: { cluster_id: parent_cluster_id },
-                },
-            }),
         },
     })
 }

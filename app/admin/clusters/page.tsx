@@ -14,7 +14,7 @@ export default async function ClustersListPage() {
         limit: 100,
         offset: 0,
         sort_order: 'desc',
-    })
+    }, user.user_id)
 
     const getStateVariant = (state: string) => {
         switch (state) {

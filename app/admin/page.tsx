@@ -15,8 +15,8 @@ export default async function AdminDashboard() {
     // Get counts
     const [signalsData, clustersData, synthesisData, usersData] = await Promise.all([
         querySignals({ limit: 1, offset: 0, sort_order: 'desc' }, user.user_id),
-        queryClusters({ limit: 1, offset: 0, sort_order: 'desc' }),
-        querySynthesis({ limit: 1, offset: 0, sort_order: 'desc' }),
+        queryClusters({ limit: 1, offset: 0, sort_order: 'desc' }, user.user_id),
+        querySynthesis({ limit: 1, offset: 0, sort_order: 'desc' }, user.user_id),
         listUsers({ limit: 1, offset: 0 }),
     ])
 

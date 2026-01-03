@@ -13,7 +13,7 @@ export default async function EditSynthesisPage({
 }) {
     const { id } = await params
     const user = await requireAuth()
-    const synthesis = await getSynthesisById(id)
+    const synthesis = await getSynthesisById(id, user.user_id)
 
     if (!synthesis) {
         notFound()

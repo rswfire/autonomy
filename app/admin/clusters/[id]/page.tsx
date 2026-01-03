@@ -13,7 +13,7 @@ export default async function EditClusterPage({
 }) {
     const { id } = await params
     const user = await requireAuth()
-    const cluster = await getClusterById(id)
+    const cluster = await getClusterById(id, user.user_id)
 
     if (!cluster) {
         notFound()

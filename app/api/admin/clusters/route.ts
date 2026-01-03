@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
             limit: 100,
             offset: 0,
             sort_order: 'desc',
-        })
+        }, user.user_id)
         return NextResponse.json({ clusters })
     } catch (error) {
         if (error instanceof Error && error.message === 'Unauthorized') {

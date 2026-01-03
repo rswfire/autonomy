@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/utils/auth'
 
 export async function GET(request: NextRequest) {
     try {
-        const user = await requireAuth(request)
+        const user = await requireAuth()
 
         return NextResponse.json({
             authenticated: true,

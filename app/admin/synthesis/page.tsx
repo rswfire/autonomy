@@ -14,7 +14,7 @@ export default async function SynthesisListPage() {
         limit: 100,
         offset: 0,
         sort_order: 'desc',
-    })
+    }, user.user_id)
 
     return (
         <div className="max-w-7xl mx-auto py-8 px-6">

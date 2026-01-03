@@ -11,7 +11,7 @@ export async function GET(
     const params = await context.params
     try {
         const user = await requireAuth()
-        const cluster = await getClusterById(params.id)
+        const cluster = await getClusterById(params.id, user.user_id)
 
         if (!cluster) {
             return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })

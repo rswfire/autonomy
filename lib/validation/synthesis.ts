@@ -45,6 +45,7 @@ const reflectionSubtypeSchema = z.enum(SYNTHESIS_SUBTYPES.REFLECTION)
 // Create synthesis with type-specific subtype validation
 export const createSynthesisSchema = z.discriminatedUnion('synthesis_type', [
     z.object({
+        realm_id: z.string().length(26),
         synthesis_type: z.literal('METADATA'),
         synthesis_subtype: metadataSubtypeSchema,
         synthesis_source: z.string().max(100).optional(),
@@ -57,6 +58,7 @@ export const createSynthesisSchema = z.discriminatedUnion('synthesis_type', [
         synthesis_content: z.record(z.string(), z.unknown()).optional(),
     }),
     z.object({
+        realm_id: z.string().length(26),
         synthesis_type: z.literal('REFLECTION'),
         synthesis_subtype: reflectionSubtypeSchema,
         synthesis_source: z.string().max(100).optional(),
