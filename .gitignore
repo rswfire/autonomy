@@ -1,4 +1,3 @@
-/.idea/
 /.next/
 /.pnp/
 /.vercel/
@@ -26,3 +25,9 @@ yarn-debug.log*
 yarn-error.log*
 
 !.env.example
+
+.idea/
+*.iml
+.vscode/
+
+prisma/schema.prisma
