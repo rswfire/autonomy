@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         const user = await requireAuth()
         const body = await request.json()
         const validated = createSynthesisSchema.parse(body)
-        const synthesis = await createSynthesis(validated, user.role)
+        const synthesis = await createSynthesis(validated, user.user_id)
         return NextResponse.json({ synthesis }, { status: 201 })
     } catch (error) {
         if (error instanceof Error && error.message === 'Unauthorized') {

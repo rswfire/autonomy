@@ -26,6 +26,7 @@ const geographyPointSchema = z.object({
 // Base signal schema
 export const signalSchema = z.object({
     signal_id: z.string().length(26).refine(isValidUlid, 'Invalid ULID').optional(),
+    realm_id: z.string().length(26),
     signal_type: z.enum(SIGNAL_TYPES),
     signal_title: z.string().min(1).max(LIMITS.SIGNAL_TITLE_MAX),
     signal_description: z.string().nullable().optional(),
@@ -52,6 +53,7 @@ export const signalSchema = z.object({
 
 // Create signal (required fields only)
 export const createSignalSchema = signalSchema.pick({
+    realm_id: true,
     signal_type: true,
     signal_title: true,
     signal_description: true,

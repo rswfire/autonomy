@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
                 offset: 0,
                 sort_order: 'desc',
             },
-            user.role
+            user.user_id
         )
         return NextResponse.json({ signals })
     } catch (error) {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json()
 
         const validated = createSignalSchema.parse(body)
-        const signal = await createSignal(validated, user.role)
+        const signal = await createSignal(validated, user.user_id)
 
         return NextResponse.json({ signal }, { status: 201 })
     } catch (error) {

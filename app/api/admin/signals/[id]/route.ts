@@ -12,7 +12,7 @@ export async function GET(
 
     try {
         const user = await requireAuth()
-        const signal = await getSignalById(params.id, user.role)
+        const signal = await getSignalById(params.id, user.user_id)
 
         if (!signal) {
             return NextResponse.json(
@@ -50,7 +50,7 @@ export async function PATCH(
         }
 
         const validated = updateSignalSchema.parse(dataWithId)
-        const signal = await updateSignal(validated, user.role)
+        const signal = await updateSignal(validated, user.user_id)
 
         return NextResponse.json({ signal })
     } catch (error) {
@@ -81,7 +81,7 @@ export async function DELETE(
 
     try {
         const user = await requireAuth()
-        await deleteSignal(params.id, user.role)
+        await deleteSignal(params.id, user.user_id)
 
         return NextResponse.json({ success: true })
     } catch (error) {

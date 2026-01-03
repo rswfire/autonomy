@@ -35,7 +35,7 @@ export async function PATCH(
         const user = await requireAuth()
         const body = await request.json()
         const validated = updateClusterSchema.parse({ cluster_id: params.id, ...body })
-        const cluster = await updateCluster(validated, user.role)
+        const cluster = await updateCluster(validated, user.user_id)
         return NextResponse.json({ cluster })
     } catch (error) {
         if (error instanceof Error && error.message === 'Unauthorized') {
@@ -55,7 +55,7 @@ export async function DELETE(
     const params = await context.params
     try {
         const user = await requireAuth()
-        await deleteCluster(params.id, user.role)
+        await deleteCluster(params.id, user.user_id)
         return NextResponse.json({ success: true })
     } catch (error) {
         if (error instanceof Error && error.message === 'Unauthorized') {

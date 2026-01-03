@@ -10,6 +10,7 @@ import {
 // Base synthesis schema
 export const synthesisSchema = z.object({
     synthesis_id: z.string().length(26).optional(),
+    realm_id: z.string().length(26),
     synthesis_type: z.enum(SYNTHESIS_TYPES),
     synthesis_subtype: z.string(), // Validated separately based on type
     synthesis_source: z.string().max(100).nullable().optional(),

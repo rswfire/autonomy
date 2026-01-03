@@ -14,18 +14,62 @@ import type {
     AddSynthesisErrorInput,
     SynthesisFilter,
 } from '../validation/synthesis'
-import { requireOwner } from '../utils/permissions'
-import type { UserRole } from '../types'
 import { ulid } from '../utils/ulid'
+
+/**
+ * Get user's accessible realm IDs
+ */
+async function getUserRealmIds(userId: string): Promise<string[]> {
+    const realms = await prisma.realm.findMany({
+        where: {
+            OR: [
+                { user_id: userId },
+                { members: { some: { user_id: userId } } },
+            ],
+        },
+        select: { realm_id: true },
+    })
+    return realms.map(r => r.realm_id)
+}
 
 /**
  * Create a new synthesis
  */
 export async function createSynthesis(
     data: CreateSynthesisInput,
-    user_role: UserRole
+    userId: string
 ): Promise<Synthesis> {
-    requireOwner(user_role, 'create synthesis')
+    // Verify user has access to this realm
+    const hasAccess = await prisma.realm.findFirst({
+        where: {
+            realm_id: data.realm_id,
+            OR: [
+                { user_id: userId },
+                { members: { some: { user_id: userId } } },
+            ],
+        },
+    })
+
+    if (!hasAccess) {
+        throw new Error('User does not have access to this realm')
+    }
+
+    // Verify polymorphic target belongs to same realm
+    if (data.polymorphic_type === 'Signal') {
+        const signal = await prisma.signal.findUnique({
+            where: { signal_id: data.polymorphic_id },
+        })
+        if (!signal || signal.realm_id !== data.realm_id) {
+            throw new Error('Signal must belong to same realm as synthesis')
+        }
+    } else if (data.polymorphic_type === 'Cluster') {
+        const cluster = await prisma.cluster.findUnique({
+            where: { cluster_id: data.polymorphic_id },
+        })
+        if (!cluster || cluster.realm_id !== data.realm_id) {
+            throw new Error('Cluster must belong to same realm as synthesis')
+        }
+    }
 
     const { synthesis_annotations, synthesis_content, ...rest } = data
 
@@ -40,16 +84,22 @@ export async function createSynthesis(
 }
 
 /**
- * Get synthesis by ID
+ * Get synthesis by ID (realm-scoped)
  */
 export async function getSynthesisById(
     synthesis_id: string,
+    userId: string,
     options?: {
         include_target?: boolean
     }
 ): Promise<Synthesis | SynthesisComplete | null> {
-    const synthesis = await prisma.synthesis.findUnique({
-        where: { synthesis_id },
+    const userRealmIds = await getUserRealmIds(userId)
+
+    const synthesis = await prisma.synthesis.findFirst({
+        where: {
+            synthesis_id,
+            realm_id: { in: userRealmIds },
+        },
     })
 
     if (!synthesis || !options?.include_target) {
@@ -77,10 +127,8 @@ export async function getSynthesisById(
  */
 export async function updateSynthesis(
     data: UpdateSynthesisInput,
-    user_role: UserRole
+    userId: string
 ): Promise<Synthesis> {
-    requireOwner(user_role, 'update synthesis')
-
     const {
         synthesis_id,
         synthesis_annotations,
@@ -88,6 +136,16 @@ export async function updateSynthesis(
         synthesis_embedding,
         ...rest
     } = data
+
+    // Verify user owns the realm this synthesis belongs to
+    const synthesis = await prisma.synthesis.findUnique({
+        where: { synthesis_id },
+        include: { realm: true },
+    })
+
+    if (!synthesis || synthesis.realm.user_id !== userId) {
+        throw new Error('Not authorized to update this synthesis')
+    }
 
     return await prisma.synthesis.update({
         where: { synthesis_id },
@@ -105,9 +163,17 @@ export async function updateSynthesis(
  */
 export async function deleteSynthesis(
     synthesis_id: string,
-    user_role: UserRole
+    userId: string
 ): Promise<Synthesis> {
-    requireOwner(user_role, 'delete synthesis')
+    // Verify user owns the realm this synthesis belongs to
+    const synthesis = await prisma.synthesis.findUnique({
+        where: { synthesis_id },
+        include: { realm: true },
+    })
+
+    if (!synthesis || synthesis.realm.user_id !== userId) {
+        throw new Error('Not authorized to delete this synthesis')
+    }
 
     return await prisma.synthesis.delete({
         where: { synthesis_id },
@@ -119,18 +185,21 @@ export async function deleteSynthesis(
  */
 export async function addSynthesisHistory(
     data: AddSynthesisHistoryInput,
-    user_role: UserRole
+    userId: string
 ): Promise<Synthesis> {
-    requireOwner(user_role, 'modify synthesis')
-
     const { synthesis_id, action, data: historyData } = data
 
     const synthesis = await prisma.synthesis.findUnique({
         where: { synthesis_id },
+        include: { realm: true },
     })
 
     if (!synthesis) {
         throw new Error('Synthesis not found')
+    }
+
+    if (synthesis.realm.user_id !== userId) {
+        throw new Error('Not authorized to modify this synthesis')
     }
 
     const history = (synthesis.synthesis_history as any[]) || []
@@ -153,18 +222,21 @@ export async function addSynthesisHistory(
  */
 export async function addSynthesisError(
     data: AddSynthesisErrorInput,
-    user_role: UserRole
+    userId: string
 ): Promise<Synthesis> {
-    requireOwner(user_role, 'modify synthesis')
-
     const { synthesis_id, error, context } = data
 
     const synthesis = await prisma.synthesis.findUnique({
         where: { synthesis_id },
+        include: { realm: true },
     })
 
     if (!synthesis) {
         throw new Error('Synthesis not found')
+    }
+
+    if (synthesis.realm.user_id !== userId) {
+        throw new Error('Not authorized to modify this synthesis')
     }
 
     const errors = (synthesis.synthesis_errors as any[]) || []
@@ -183,18 +255,22 @@ export async function addSynthesisError(
 }
 
 /**
- * Get synthesis for a signal
+ * Get synthesis for a signal (realm-scoped)
  */
 export async function getSynthesisForSignal(
     signal_id: string,
+    userId: string,
     options?: {
         synthesis_type?: string
         synthesis_subtype?: string
     }
 ): Promise<Synthesis[]> {
+    const userRealmIds = await getUserRealmIds(userId)
+
     const where: any = {
         polymorphic_id: signal_id,
         polymorphic_type: 'Signal',
+        realm_id: { in: userRealmIds },
     }
 
     if (options?.synthesis_type) {
@@ -212,18 +288,22 @@ export async function getSynthesisForSignal(
 }
 
 /**
- * Get synthesis for a cluster
+ * Get synthesis for a cluster (realm-scoped)
  */
 export async function getSynthesisForCluster(
     cluster_id: string,
+    userId: string,
     options?: {
         synthesis_type?: string
         synthesis_subtype?: string
     }
 ): Promise<Synthesis[]> {
+    const userRealmIds = await getUserRealmIds(userId)
+
     const where: any = {
         polymorphic_id: cluster_id,
         polymorphic_type: 'Cluster',
+        realm_id: { in: userRealmIds },
     }
 
     if (options?.synthesis_type) {
@@ -241,12 +321,17 @@ export async function getSynthesisForCluster(
 }
 
 /**
- * Query synthesis with filters
+ * Query synthesis with filters (realm-scoped)
  */
-export async function querySynthesis(filter: Partial<SynthesisFilter>): Promise<{
+export async function querySynthesis(
+    filter: Partial<SynthesisFilter>,
+    userId: string
+): Promise<{
     synthesis: Synthesis[]
     total: number
 }> {
+    const userRealmIds = await getUserRealmIds(userId)
+
     const {
         synthesis_type,
         synthesis_subtype,
@@ -266,7 +351,9 @@ export async function querySynthesis(filter: Partial<SynthesisFilter>): Promise<
     } = filter
 
     // Build where clause
-    const where: any = {}
+    const where: any = {
+        realm_id: { in: userRealmIds },
+    }
 
     if (synthesis_type) where.synthesis_type = synthesis_type
     if (synthesis_subtype) where.synthesis_subtype = synthesis_subtype
@@ -332,20 +419,24 @@ export async function querySynthesis(filter: Partial<SynthesisFilter>): Promise<
 }
 
 /**
- * Get synthesis by type and subtype
+ * Get synthesis by type and subtype (realm-scoped)
  */
 export async function getSynthesisByTypeAndSubtype(
     synthesis_type: string,
     synthesis_subtype: string,
+    userId: string,
     options?: {
         limit?: number
         offset?: number
     }
 ): Promise<Synthesis[]> {
+    const userRealmIds = await getUserRealmIds(userId)
+
     return await prisma.synthesis.findMany({
         where: {
             synthesis_type,
             synthesis_subtype,
+            realm_id: { in: userRealmIds },
         },
         orderBy: { stamp_created: 'desc' },
         take: options?.limit ?? 10,

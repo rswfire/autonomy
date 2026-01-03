@@ -16,7 +16,7 @@ export default async function SignalsListPage() {
             offset: 0,
             sort_order: 'desc',
         },
-        user.role
+        user.user_id
     )
 
     const getStatusVariant = (status: string) => {

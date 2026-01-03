@@ -14,7 +14,7 @@ export default async function AdminDashboard() {
 
     // Get counts
     const [signalsData, clustersData, synthesisData, usersData] = await Promise.all([
-        querySignals({ limit: 1, offset: 0, sort_order: 'desc' }, user.role),
+        querySignals({ limit: 1, offset: 0, sort_order: 'desc' }, user.user_id),
         queryClusters({ limit: 1, offset: 0, sort_order: 'desc' }),
         querySynthesis({ limit: 1, offset: 0, sort_order: 'desc' }),
         listUsers({ limit: 1, offset: 0 }),
@@ -150,7 +150,7 @@ export default async function AdminDashboard() {
                     <div className="space-y-3">
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
                             <span className="text-sm text-gray-600">Role</span>
-                            <span className="text-sm font-medium text-gray-900">{user.role}</span>
+                            <span className="text-sm font-medium text-gray-900">{user.user_id}</span>
                         </div>
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
                             <span className="text-sm text-gray-600">Database</span>

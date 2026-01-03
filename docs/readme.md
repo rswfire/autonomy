@@ -33,39 +33,59 @@ Autonomy is built on the recognition that:
 ### Database Schema
 
 **Core Models:**
+- `realms` - Sovereign territories for signals and synthesis (PRIVATE/PUBLIC/SHARED).
+- `realms_users` - Many-to-many membership with role-based access (OWNER/CONTRIBUTOR/OBSERVER).
 - `signals` - Atomic data units with geospatial and embedding support.
 - `clusters` - Hierarchical groupings of signals.
 - `clusters_signals` - Many-to-many pivot with positioning.
 - `synthesis` - Polymorphic AI analysis layer (attaches to signals or clusters).
 - `users` - Authentication with role-based access control.
 
-**Roles:**
+**User Roles:**
 - `OWNER` - Full control (create/edit/delete).
 - `SANCTUM` - Can view SANCTUM + PUBLIC signals.
 - `GUEST` - Can only view PUBLIC signals.
 
-**Visibility Levels:**
+**Signal Visibility:**
 - `PUBLIC` - Anyone can view.
 - `SANCTUM` - Trusted users only.
 - `PRIVATE` - Owner only.
 - `SHARED` - Owner only (reserved for future sharing features).
 
+### Realm
+**Sovereign territory for signals and synthesis.**
+
+Every user has a default private realm created automatically on registration. Users can create additional realms and control their visibility:
+
+- **PRIVATE** (default) - Single user's realm, not listed in public registry.
+- **PUBLIC** - Opted into public registry, discoverable by other users, signals respect visibility settings.
+- **SHARED** - Multiple users as members, collaborative signal space (future: consent-based synthesis).
+
+**Key principles:**
+- All signals, clusters, and synthesis belong to a realm.
+- Users can be members of multiple realms.
+- Realm membership determines data access.
+- Signals can only be added to clusters within the same realm (epistemic integrity).
+
+**Remnant operates across your realm(s).** Future: Remnants communicate across consent-linked realms (ansible network).
 
 ### Signal
-The atomic unit of lived data. A photo, video, audio recording, text note, or location marker. Each signal is timestamped, geolocated (optional), and classified as:
+The atomic unit of lived data. A photo, video, audio recording, text note, or location marker. Each signal belongs to a realm and is timestamped, geolocated (optional), and classified with visibility:
 - **Public** - shareable with the world.
-- **Private** - visible only to you.
-- **Sanctum** - a protected space.
+- **Private** - visible only to realm owner.
+- **Sanctum** - a protected space for trusted users.
 
 ### Cluster
-Structured grouping of related signals based on:
+Structured grouping of related signals within a realm based on:
 - **Temporal proximity** - signals from the same time period.
 - **Spatial proximity** - signals from the same location.
 - **Thematic similarity** - signals with related content.
 
+Clusters can contain hierarchies (parent/child relationships) and signals are ordered by position within the cluster.
+
 ### Synthesis
 
-**AI-powered pattern detection and relationship mapping across signals and clusters.**
+**AI-powered pattern detection and relationship mapping across signals and clusters within a realm.**
 
 The synthesis layer processes raw signals to generate two forms of understanding:
 
@@ -96,6 +116,7 @@ Transforms signals and clusters into coherent narrative forms:
 - Trajectory shifts and inflection points.
 - Structural coherence patterns.
 - Emergent narratives visible only at scale.
+
 ---
 
 ## Why Autonomy Exists
@@ -165,28 +186,32 @@ Transforms signals and clusters into coherent narrative forms:
 
 ## Roadmap
 
-### Phase 1: Core Infrastructure (Current)
+### Phase 1: Core Infrastructure ✅
 - [x] Database schema with Prisma ORM
+- [x] Realm architecture (PRIVATE/PUBLIC/SHARED)
+- [x] Multi-tenant data isolation
 - [x] CRUD operations with auth
 - [x] Role-based access control
 - [x] ULID-based ID generation
 - [x] Password hashing and validation
 - [x] Geospatial and embedding support
 
-### Phase 2: API & Authentication (Next)
+### Phase 2: API & Authentication (Current)
+- [x] JWT/session-based authentication middleware
 - [ ] REST/GraphQL API routes
-- [ ] JWT/session-based authentication middleware
 - [ ] Rate limiting and request validation
 - [ ] API documentation (OpenAPI/Swagger)
 - [ ] WebSocket support for real-time updates
 
-### Phase 3: Frontend & User Experience
-- [ ] Frontend UI components (React/Next.js)
-- [ ] Signal creation and editing interfaces
-- [ ] Cluster management and visualization
+### Phase 3: Frontend & User Experience (In Progress)
+- [x] Frontend UI components (React/Next.js)
+- [x] Signal creation and editing interfaces
+- [x] Cluster management interfaces
+- [x] Synthesis creation interfaces
+- [x] Realm selector in forms
 - [ ] File upload for photos/videos/audio
 - [ ] Interactive maps for geospatial signals
-- [ ] Search and filter interfaces
+- [ ] Advanced search and filter interfaces
 - [ ] Mobile-responsive design
 - [ ] Progressive Web App (PWA) support
 - [ ] Native mobile app (iOS/Android)
@@ -201,17 +226,24 @@ Transforms signals and clusters into coherent narrative forms:
 - [ ] Automated tagging and metadata extraction
 - [ ] **Remnant**: AI field companion trained on Autonomy data
 
-### Phase 5: Advanced Features
+### Phase 5: Circles & Collaboration
+- [ ] Shared realms with multiple members
+- [ ] Consent-based collective synthesis
+- [ ] Signal opt-in to shared realms
+- [ ] Granular permissions (OWNER/CONTRIBUTOR/OBSERVER)
+- [ ] Collaborative editing
+- [ ] Comments and annotations
+- [ ] Real-time updates across realm members
+
+### Phase 6: Advanced Features
 - [ ] Export/import capabilities (JSON, Markdown, Archive formats)
-- [ ] Multi-user sharing features (granular permissions)
-- [ ] Collaboration tools (comments, annotations)
 - [ ] Plugin system for custom integrations
 - [ ] Webhook support for external triggers
 - [ ] Backup and restore utilities
 - [ ] Data migration tools (from other platforms)
 - [ ] Analytics and insights dashboard
 
-### Phase 6: Ecosystem & Integration
+### Phase 7: Ecosystem & Integration
 - [ ] Public API for third-party developers
 - [ ] CLI tools for batch operations
 - [ ] Desktop app (Electron)
@@ -225,7 +257,7 @@ Transforms signals and clusters into coherent narrative forms:
 ## Support
 
 **Creator:**  
-[Robert Samuel White](https://rswfire.com) (rswfire)  
+[Robert Samuel White](https://rswfire.com) (rswfire)
 
 **License:** MIT
 
@@ -239,17 +271,16 @@ It does not:
 
 _Autonomy assumes you are competent to navigate your own cognition._
 
-
 This system is built with the recognition that **cognitive infrastructure for wholeness** is a necessity.
 
 The architecture reflects this through:
+- Realm-based sovereignty and data isolation.
 - High-fidelity signal capture.
 - Non-destructive synthesis layers.
 - Visibility controls that respect privacy gradients.
 - Geospatial and temporal indexing for narrative coherence.
 
 Autonomy refuses to commit the sin of reframing someone's reality without consent while claiming to help them.
-
 
 ---
 

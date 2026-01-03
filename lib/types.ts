@@ -1,10 +1,7 @@
 // lib/types.ts
-import { Signal, Cluster, ClusterSignal, Synthesis, User, Prisma } from '@prisma/client'
+import { Signal, Cluster, ClusterSignal, Synthesis, User, Realm, RealmUser, Prisma } from '@prisma/client'
+export type { Signal, Cluster, ClusterSignal, Synthesis, User, Realm, RealmUser }
 
-// Base types from Prisma
-export type { Signal, Cluster, ClusterSignal, Synthesis, User }
-
-// Geospatial types (varies by DB)
 export type Coordinates = {
     latitude: number
     longitude: number
@@ -15,7 +12,6 @@ export type GeographyPoint = {
     coordinates: [number, number] // [longitude, latitude] per GeoJSON spec
 }
 
-// Signal with relations
 export type SignalWithSynthesis = Signal & {
     synthesis: Synthesis[]
 }
@@ -33,7 +29,6 @@ export type SignalComplete = Signal & {
     })[]
 }
 
-// Cluster with relations
 export type ClusterWithSignals = Cluster & {
     signals: (ClusterSignal & {
         signal: Signal
@@ -58,7 +53,6 @@ export type ClusterComplete = Cluster & {
     child_clusters: Cluster[]
 }
 
-// Synthesis polymorphic relations
 export type SynthesisWithSignal = Synthesis & {
     signal: Signal | null
 }
@@ -72,7 +66,6 @@ export type SynthesisComplete = Synthesis & {
     cluster: Cluster | null
 }
 
-// JSON field types
 export type SignalMetadata = Record<string, unknown>
 export type SignalPayload = Record<string, unknown>
 export type SignalTags = string[]
@@ -99,7 +92,6 @@ import type { USER_ROLES } from './constants'
 
 export type UserRole = typeof USER_ROLES[number]
 
-// User with role info
 export type UserWithPermissions = User & {
     permissions: {
         can_create: boolean
@@ -110,12 +102,29 @@ export type UserWithPermissions = User & {
     }
 }
 
-// Embedding types
+export type RealmWithMembers = Realm & {
+    members: RealmUser[]
+}
+
+export type RealmWithSignals = Realm & {
+    signals: Signal[]
+}
+
+export type RealmComplete = Realm & {
+    members: RealmUser[]
+    signals: Signal[]
+    clusters: Cluster[]
+    synthesis: Synthesis[]
+}
+
+export type UserWithRealms = User & {
+    created_realms: Realm[]
+    realm_memberships: RealmUser[]
+}
+
 export type EmbeddingVector = number[] // 1536 dimensions for OpenAI ada-002
 
-// Database type detection
 export const isPostgres = process.env.DATABASE_URL?.startsWith('postgres')
 
-// Prisma JSON helpers
 export type JsonValue = Prisma.JsonValue
 export type JsonObject = Prisma.JsonObject

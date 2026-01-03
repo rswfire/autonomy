@@ -16,18 +16,45 @@ import type {
     UpdateClusterSignalInput,
     ClusterFilter,
 } from '../validation/cluster'
-import { requireOwner } from '../utils/permissions'
-import type { UserRole } from '../types'
 import { ulid } from '../utils/ulid'
+
+/**
+ * Get user's accessible realm IDs
+ */
+async function getUserRealmIds(userId: string): Promise<string[]> {
+    const realms = await prisma.realm.findMany({
+        where: {
+            OR: [
+                { user_id: userId },
+                { members: { some: { user_id: userId } } },
+            ],
+        },
+        select: { realm_id: true },
+    })
+    return realms.map(r => r.realm_id)
+}
 
 /**
  * Create a new cluster
  */
 export async function createCluster(
     data: CreateClusterInput,
-    user_role: UserRole
+    userId: string
 ): Promise<Cluster> {
-    requireOwner(user_role, 'create clusters')
+    // Verify user has access to this realm
+    const hasAccess = await prisma.realm.findFirst({
+        where: {
+            realm_id: data.realm_id,
+            OR: [
+                { user_id: userId },
+                { members: { some: { user_id: userId } } },
+            ],
+        },
+    })
+
+    if (!hasAccess) {
+        throw new Error('User does not have access to this realm')
+    }
 
     const { parent_cluster_id, cluster_annotations, cluster_metadata, cluster_payload, cluster_tags, ...rest } = data
 
@@ -49,16 +76,19 @@ export async function createCluster(
 }
 
 /**
- * Get cluster by ID
+ * Get cluster by ID (realm-scoped)
  */
 export async function getClusterById(
     cluster_id: string,
+    userId: string,
     options?: {
         include_signals?: boolean
         include_synthesis?: boolean
         include_hierarchy?: boolean
     }
 ): Promise<Cluster | ClusterWithSignals | ClusterWithSynthesis | ClusterComplete | null> {
+    const userRealmIds = await getUserRealmIds(userId)
+
     const include: any = {}
 
     if (options?.include_signals) {
@@ -81,8 +111,11 @@ export async function getClusterById(
         include.child_clusters = true
     }
 
-    return await prisma.cluster.findUnique({
-        where: { cluster_id },
+    return await prisma.cluster.findFirst({
+        where: {
+            cluster_id,
+            realm_id: { in: userRealmIds },
+        },
         include: Object.keys(include).length > 0 ? include : undefined,
     })
 }
@@ -92,10 +125,8 @@ export async function getClusterById(
  */
 export async function updateCluster(
     data: UpdateClusterInput,
-    user_role: UserRole
+    userId: string
 ): Promise<Cluster> {
-    requireOwner(user_role, 'update clusters')
-
     const {
         cluster_id,
         cluster_annotations,
@@ -106,6 +137,16 @@ export async function updateCluster(
         parent_cluster_id,
         ...rest
     } = data
+
+    // Verify user owns the realm this cluster belongs to
+    const cluster = await prisma.cluster.findUnique({
+        where: { cluster_id },
+        include: { realm: true },
+    })
+
+    if (!cluster || cluster.realm.user_id !== userId) {
+        throw new Error('Not authorized to update this cluster')
+    }
 
     return await prisma.cluster.update({
         where: { cluster_id },
@@ -130,9 +171,17 @@ export async function updateCluster(
  */
 export async function deleteCluster(
     cluster_id: string,
-    user_role: UserRole
+    userId: string
 ): Promise<Cluster> {
-    requireOwner(user_role, 'delete clusters')
+    // Verify user owns the realm this cluster belongs to
+    const cluster = await prisma.cluster.findUnique({
+        where: { cluster_id },
+        include: { realm: true },
+    })
+
+    if (!cluster || cluster.realm.user_id !== userId) {
+        throw new Error('Not authorized to delete this cluster')
+    }
 
     return await prisma.cluster.delete({
         where: { cluster_id },
@@ -144,11 +193,28 @@ export async function deleteCluster(
  */
 export async function addSignalToCluster(
     data: AddSignalToClusterInput,
-    user_role: UserRole
+    userId: string
 ): Promise<void> {
-    requireOwner(user_role, 'modify clusters')
-
     const { cluster_id, signal_id, pivot_position, pivot_metadata } = data
+
+    // Verify user owns the realm this cluster belongs to
+    const cluster = await prisma.cluster.findUnique({
+        where: { cluster_id },
+        include: { realm: true },
+    })
+
+    if (!cluster || cluster.realm.user_id !== userId) {
+        throw new Error('Not authorized to modify this cluster')
+    }
+
+    // Verify signal belongs to same realm as cluster
+    const signal = await prisma.signal.findUnique({
+        where: { signal_id },
+    })
+
+    if (!signal || signal.realm_id !== cluster.realm_id) {
+        throw new Error('Signal must belong to same realm as cluster')
+    }
 
     await prisma.clusterSignal.create({
         data: {
@@ -165,11 +231,19 @@ export async function addSignalToCluster(
  */
 export async function removeSignalFromCluster(
     data: RemoveSignalFromClusterInput,
-    user_role: UserRole
+    userId: string
 ): Promise<void> {
-    requireOwner(user_role, 'modify clusters')
-
     const { cluster_id, signal_id } = data
+
+    // Verify user owns the realm this cluster belongs to
+    const cluster = await prisma.cluster.findUnique({
+        where: { cluster_id },
+        include: { realm: true },
+    })
+
+    if (!cluster || cluster.realm.user_id !== userId) {
+        throw new Error('Not authorized to modify this cluster')
+    }
 
     await prisma.clusterSignal.delete({
         where: {
@@ -186,11 +260,19 @@ export async function removeSignalFromCluster(
  */
 export async function updateClusterSignal(
     data: UpdateClusterSignalInput,
-    user_role: UserRole
+    userId: string
 ): Promise<void> {
-    requireOwner(user_role, 'modify clusters')
-
     const { cluster_id, signal_id, pivot_position, pivot_metadata } = data
+
+    // Verify user owns the realm this cluster belongs to
+    const cluster = await prisma.cluster.findUnique({
+        where: { cluster_id },
+        include: { realm: true },
+    })
+
+    if (!cluster || cluster.realm.user_id !== userId) {
+        throw new Error('Not authorized to modify this cluster')
+    }
 
     await prisma.clusterSignal.update({
         where: {
@@ -207,9 +289,26 @@ export async function updateClusterSignal(
 }
 
 /**
- * Get signals in cluster (ordered by position)
+ * Get signals in cluster (ordered by position, realm-scoped)
  */
-export async function getClusterSignals(cluster_id: string): Promise<any[]> {
+export async function getClusterSignals(
+    cluster_id: string,
+    userId: string
+): Promise<any[]> {
+    const userRealmIds = await getUserRealmIds(userId)
+
+    // Verify cluster is in accessible realm
+    const cluster = await prisma.cluster.findFirst({
+        where: {
+            cluster_id,
+            realm_id: { in: userRealmIds },
+        },
+    })
+
+    if (!cluster) {
+        throw new Error('Cluster not found or not accessible')
+    }
+
     const clusterSignals = await prisma.clusterSignal.findMany({
         where: { cluster_id },
         include: {
@@ -224,12 +323,17 @@ export async function getClusterSignals(cluster_id: string): Promise<any[]> {
 }
 
 /**
- * Query clusters with filters
+ * Query clusters with filters (realm-scoped)
  */
-export async function queryClusters(filter: Partial<ClusterFilter>): Promise<{
+export async function queryClusters(
+    filter: Partial<ClusterFilter>,
+    userId: string
+): Promise<{
     clusters: Cluster[]
     total: number
 }> {
+    const userRealmIds = await getUserRealmIds(userId)
+
     const {
         cluster_type,
         cluster_state,
@@ -254,7 +358,9 @@ export async function queryClusters(filter: Partial<ClusterFilter>): Promise<{
     } = filter
 
     // Build where clause
-    const where: any = {}
+    const where: any = {
+        realm_id: { in: userRealmIds },
+    }
 
     if (cluster_type) where.cluster_type = cluster_type
     if (cluster_state) where.cluster_state = cluster_state
@@ -349,25 +455,41 @@ export async function queryClusters(filter: Partial<ClusterFilter>): Promise<{
 }
 
 /**
- * Get child clusters
+ * Get child clusters (realm-scoped)
  */
-export async function getChildClusters(parent_cluster_id: string): Promise<Cluster[]> {
+export async function getChildClusters(
+    parent_cluster_id: string,
+    userId: string
+): Promise<Cluster[]> {
+    const userRealmIds = await getUserRealmIds(userId)
+
     return await prisma.cluster.findMany({
-        where: { parent_cluster_id },
+        where: {
+            parent_cluster_id,
+            realm_id: { in: userRealmIds },
+        },
         orderBy: { stamp_created: 'desc' },
     })
 }
 
 /**
- * Get cluster hierarchy (ancestors and descendants)
+ * Get cluster hierarchy (ancestors and descendants, realm-scoped)
  */
-export async function getClusterHierarchy(cluster_id: string): Promise<{
+export async function getClusterHierarchy(
+    cluster_id: string,
+    userId: string
+): Promise<{
     cluster: ClusterWithHierarchy | null
     ancestors: Cluster[]
     descendants: Cluster[]
 }> {
-    const cluster = await prisma.cluster.findUnique({
-        where: { cluster_id },
+    const userRealmIds = await getUserRealmIds(userId)
+
+    const cluster = await prisma.cluster.findFirst({
+        where: {
+            cluster_id,
+            realm_id: { in: userRealmIds },
+        },
         include: {
             parent_cluster: true,
             child_clusters: true,
@@ -378,21 +500,27 @@ export async function getClusterHierarchy(cluster_id: string): Promise<{
         return { cluster: null, ancestors: [], descendants: [] }
     }
 
-    // Get all ancestors (recursive)
+    // Get all ancestors (recursive, realm-scoped)
     const ancestors: Cluster[] = []
     let current = cluster.parent_cluster
     while (current) {
         ancestors.push(current)
-        current = await prisma.cluster.findUnique({
-            where: { cluster_id: current.parent_cluster_id || '' },
+        current = await prisma.cluster.findFirst({
+            where: {
+                cluster_id: current.parent_cluster_id || '',
+                realm_id: { in: userRealmIds },
+            },
         })
     }
 
-    // Get all descendants (recursive)
+    // Get all descendants (recursive, realm-scoped)
     const descendants: Cluster[] = []
     const getDescendants = async (parentId: string) => {
         const children = await prisma.cluster.findMany({
-            where: { parent_cluster_id: parentId },
+            where: {
+                parent_cluster_id: parentId,
+                realm_id: { in: userRealmIds },
+            },
         })
 
         for (const child of children) {
@@ -407,11 +535,19 @@ export async function getClusterHierarchy(cluster_id: string): Promise<{
 }
 
 /**
- * Get cluster with full relations
+ * Get cluster with full relations (realm-scoped)
  */
-export async function getClusterComplete(cluster_id: string): Promise<ClusterComplete | null> {
-    return await prisma.cluster.findUnique({
-        where: { cluster_id },
+export async function getClusterComplete(
+    cluster_id: string,
+    userId: string
+): Promise<ClusterComplete | null> {
+    const userRealmIds = await getUserRealmIds(userId)
+
+    return await prisma.cluster.findFirst({
+        where: {
+            cluster_id,
+            realm_id: { in: userRealmIds },
+        },
         include: {
             signals: {
                 include: {

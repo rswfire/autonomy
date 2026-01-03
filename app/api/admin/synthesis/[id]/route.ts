@@ -35,7 +35,7 @@ export async function PATCH(
         const user = await requireAuth()
         const body = await request.json()
         const validated = updateSynthesisSchema.parse({ synthesis_id: params.id, ...body })
-        const synthesis = await updateSynthesis(validated, user.role)
+        const synthesis = await updateSynthesis(validated, user.user_id)
         return NextResponse.json({ synthesis })
     } catch (error) {
         if (error instanceof Error && error.message === 'Unauthorized') {
@@ -55,7 +55,7 @@ export async function DELETE(
     const params = await context.params
     try {
         const user = await requireAuth()
-        await deleteSynthesis(params.id, user.role)
+        await deleteSynthesis(params.id, user.user_id)
         return NextResponse.json({ success: true })
     } catch (error) {
         if (error instanceof Error && error.message === 'Unauthorized') {

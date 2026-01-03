@@ -1,5 +1,9 @@
 // lib/constants.ts
 
+// Realm constants
+export const REALM_TYPES = ['PRIVATE', 'PUBLIC', 'SHARED'] as const
+export const REALM_USER_ROLES = ['OWNER', 'CONTRIBUTOR', 'OBSERVER'] as const
+
 // Signal constants
 export const SIGNAL_TYPES = [
     'TEXT',

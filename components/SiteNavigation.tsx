@@ -26,7 +26,7 @@ export function SiteNavigation() {
             try {
                 const response = await fetch('/api/admin/auth/check')
                 const data = await response.json()
-                setIsOwner(data.role === 'OWNER' || data.role === 'SANCTUM')
+                setIsOwner(data.authenticated)  // ← Changed from role check
             } catch {
                 setIsOwner(false)
             }

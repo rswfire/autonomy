@@ -6,7 +6,7 @@ import type { CreateUserInput, UpdateUserInput, LoginInput, ChangePasswordInput 
 import { ulid } from '../utils/ulid'
 
 /**
- * Create a new user
+ * Create a new user (with default realm)
  */
 export async function createUser(data: CreateUserInput): Promise<User> {
     const { user_password, ...rest } = data
@@ -14,13 +14,31 @@ export async function createUser(data: CreateUserInput): Promise<User> {
     // Hash password
     const hashedPassword = await hashPassword(user_password)
 
-    return await prisma.user.create({
-        data: {
-            user_id: ulid(),
-            ...rest,
-            user_password: hashedPassword,
-        },
+    // Create user and default realm in transaction
+    const result = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+            data: {
+                user_id: ulid(),
+                ...rest,
+                user_password: hashedPassword,
+            },
+        })
+
+        // Create default private realm for new user
+        await tx.realm.create({
+            data: {
+                realm_id: ulid(),
+                user_id: user.user_id,
+                realm_type: 'PRIVATE',
+                realm_name: 'My Realm',
+                flag_registry: false,
+            },
+        })
+
+        return user
     })
+
+    return result
 }
 
 /**

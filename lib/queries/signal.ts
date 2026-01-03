@@ -13,21 +13,45 @@ import type {
     SignalFilter,
 } from '../validation/signal'
 import { isPostgres } from '../types'
-import { requireOwner, buildVisibilityFilter } from '../utils/permissions'
-import type { UserRole } from '../types'
-import { ulid, ulidFromDate } from '../utils/ulid'
+import { ulid } from '../utils/ulid'
+
+/**
+ * Get user's accessible realm IDs
+ */
+async function getUserRealmIds(userId: string): Promise<string[]> {
+    const realms = await prisma.realm.findMany({
+        where: {
+            OR: [
+                { user_id: userId },
+                { members: { some: { user_id: userId } } },
+            ],
+        },
+        select: { realm_id: true },
+    })
+    return realms.map(r => r.realm_id)
+}
 
 /**
  * Create a new signal
  */
 export async function createSignal(
     data: CreateSignalInput,
-    user_role: UserRole,
-    options?: {
-        timestamp?: Date  // Optional: custom timestamp for ULID
-    }
+    userId: string
 ): Promise<Signal> {
-    requireOwner(user_role, 'create signals')
+    // Verify user has access to this realm
+    const hasAccess = await prisma.realm.findFirst({
+        where: {
+            realm_id: data.realm_id,
+            OR: [
+                { user_id: userId },
+                { members: { some: { user_id: userId } } },
+            ],
+        },
+    })
+
+    if (!hasAccess) {
+        throw new Error('User does not have access to this realm')
+    }
 
     const { coordinates, signal_metadata, signal_payload, signal_tags, ...rest } = data
 
@@ -59,16 +83,18 @@ export async function createSignal(
 }
 
 /**
- * Get signal by ID with visibility check
+ * Get signal by ID with realm access check
  */
 export async function getSignalById(
     signal_id: string,
-    user_role: UserRole | null = null,
+    userId: string,
     options?: {
         include_synthesis?: boolean
         include_clusters?: boolean
     }
 ): Promise<Signal | SignalWithSynthesis | SignalWithClusters | SignalComplete | null> {
+    const userRealmIds = await getUserRealmIds(userId)
+
     const include = {
         synthesis: options?.include_synthesis ?? false,
         clusters: options?.include_clusters
@@ -80,20 +106,13 @@ export async function getSignalById(
             : false,
     }
 
-    const signal = await prisma.signal.findUnique({
-        where: { signal_id },
+    const signal = await prisma.signal.findFirst({
+        where: {
+            signal_id,
+            realm_id: { in: userRealmIds },
+        },
         include,
     })
-
-    // Check visibility permissions
-    if (signal && user_role !== 'OWNER') {
-        const visibilityFilter = buildVisibilityFilter(user_role)
-        const allowedLevels = visibilityFilter.signal_visibility?.in || ['PUBLIC']
-
-        if (!allowedLevels.includes(signal.signal_visibility)) {
-            return null // Not authorized to view
-        }
-    }
 
     return signal
 }
@@ -103,19 +122,19 @@ export async function getSignalById(
  */
 export async function updateSignal(
     data: UpdateSignalInput,
-    user_role: UserRole
+    userId: string
 ): Promise<Signal> {
-    requireOwner(user_role, 'update signals')
+    const { signal_id, coordinates, signal_metadata, signal_payload, signal_tags, signal_embedding, ...rest } = data
 
-    const {
-        signal_id,
-        coordinates,
-        signal_metadata,
-        signal_payload,
-        signal_tags,
-        signal_embedding,
-        ...rest
-    } = data
+    // Verify user owns the realm this signal belongs to
+    const signal = await prisma.signal.findUnique({
+        where: { signal_id },
+        include: { realm: true },
+    })
+
+    if (!signal || signal.realm.user_id !== userId) {
+        throw new Error('Not authorized to update this signal')
+    }
 
     const geoData = coordinates
         ? isPostgres
@@ -149,9 +168,17 @@ export async function updateSignal(
  */
 export async function deleteSignal(
     signal_id: string,
-    user_role: UserRole
+    userId: string
 ): Promise<Signal> {
-    requireOwner(user_role, 'delete signals')
+    // Verify user owns the realm this signal belongs to
+    const signal = await prisma.signal.findUnique({
+        where: { signal_id },
+        include: { realm: true },
+    })
+
+    if (!signal || signal.realm.user_id !== userId) {
+        throw new Error('Not authorized to delete this signal')
+    }
 
     return await prisma.signal.delete({
         where: { signal_id },
@@ -159,15 +186,17 @@ export async function deleteSignal(
 }
 
 /**
- * Query signals with filters
+ * Query signals with filters (realm-scoped)
  */
 export async function querySignals(
     filter: SignalFilter,
-    user_role: UserRole | null = null
+    userId: string
 ): Promise<{
     signals: Signal[]
     total: number
 }> {
+    const userRealmIds = await getUserRealmIds(userId)
+
     const {
         signal_type,
         signal_author,
@@ -188,20 +217,14 @@ export async function querySignals(
     } = filter
 
     // Build where clause
-    const where: any = {}
-
-    // Apply visibility filter based on user role
-    const visibilityFilter = buildVisibilityFilter(user_role)
-    Object.assign(where, visibilityFilter)
-
-    // Override if specific visibility requested AND user has permission
-    if (signal_visibility && user_role === 'OWNER') {
-        where.signal_visibility = signal_visibility
+    const where: any = {
+        realm_id: { in: userRealmIds },  // Realm filter replaces role-based visibility
     }
 
     if (signal_type) where.signal_type = signal_type
     if (signal_author) where.signal_author = signal_author
     if (signal_status) where.signal_status = signal_status
+    if (signal_visibility) where.signal_visibility = signal_visibility
 
     // Date filters
     if (created_after || created_before) {
@@ -224,7 +247,6 @@ export async function querySignals(
                 array_contains: tags,
             }
         } else {
-            // 'any' or default
             where.OR = tags.map((tag) => ({
                 signal_tags: {
                     path: '$',
@@ -234,18 +256,12 @@ export async function querySignals(
         }
     }
 
-    // Text search (basic implementation - searches title and description)
+    // Text search
     if (search) {
         where.OR = [
             { signal_title: { contains: search, mode: 'insensitive' } },
             { signal_description: { contains: search, mode: 'insensitive' } },
         ]
-    }
-
-    // Geospatial query (requires custom implementation per DB)
-    if (near) {
-        // TODO: Implement geospatial filtering
-        console.warn('Geospatial filtering not yet implemented')
     }
 
     // Build orderBy
@@ -271,24 +287,23 @@ export async function querySignals(
 }
 
 /**
- * Get signals by author
+ * Get signals by author (realm-scoped)
  */
 export async function getSignalsByAuthor(
     signal_author: string,
-    user_role: UserRole | null = null,
+    userId: string,
     options?: {
         limit?: number
         offset?: number
     }
 ): Promise<Signal[]> {
-    const where: any = { signal_author }
-
-    // Apply visibility filter
-    const visibilityFilter = buildVisibilityFilter(user_role)
-    Object.assign(where, visibilityFilter)
+    const userRealmIds = await getUserRealmIds(userId)
 
     return await prisma.signal.findMany({
-        where,
+        where: {
+            signal_author,
+            realm_id: { in: userRealmIds },
+        },
         orderBy: { stamp_created: 'desc' },
         take: options?.limit ?? 10,
         skip: options?.offset ?? 0,
@@ -296,24 +311,23 @@ export async function getSignalsByAuthor(
 }
 
 /**
- * Get signals by type
+ * Get signals by type (realm-scoped)
  */
 export async function getSignalsByType(
     signal_type: string,
-    user_role: UserRole | null = null,
+    userId: string,
     options?: {
         limit?: number
         offset?: number
     }
 ): Promise<Signal[]> {
-    const where: any = { signal_type }
-
-    // Apply visibility filter
-    const visibilityFilter = buildVisibilityFilter(user_role)
-    Object.assign(where, visibilityFilter)
+    const userRealmIds = await getUserRealmIds(userId)
 
     return await prisma.signal.findMany({
-        where,
+        where: {
+            signal_type,
+            realm_id: { in: userRealmIds },
+        },
         orderBy: { stamp_created: 'desc' },
         take: options?.limit ?? 10,
         skip: options?.offset ?? 0,
@@ -321,20 +335,23 @@ export async function getSignalsByType(
 }
 
 /**
- * Get signals by visibility (owner only)
+ * Get signals by visibility (realm-scoped)
  */
 export async function getSignalsByVisibility(
     signal_visibility: string,
-    user_role: UserRole,
+    userId: string,
     options?: {
         limit?: number
         offset?: number
     }
 ): Promise<Signal[]> {
-    requireOwner(user_role, 'query by visibility')
+    const userRealmIds = await getUserRealmIds(userId)
 
     return await prisma.signal.findMany({
-        where: { signal_visibility },
+        where: {
+            signal_visibility,
+            realm_id: { in: userRealmIds },
+        },
         orderBy: { stamp_created: 'desc' },
         take: options?.limit ?? 10,
         skip: options?.offset ?? 0,
@@ -342,35 +359,36 @@ export async function getSignalsByVisibility(
 }
 
 /**
- * Get recent signals
+ * Get recent signals (realm-scoped)
  */
 export async function getRecentSignals(
-    user_role: UserRole | null = null,
+    userId: string,
     limit: number = 10
 ): Promise<Signal[]> {
-    const where: any = {}
-
-    // Apply visibility filter
-    const visibilityFilter = buildVisibilityFilter(user_role)
-    Object.assign(where, visibilityFilter)
+    const userRealmIds = await getUserRealmIds(userId)
 
     return await prisma.signal.findMany({
-        where,
+        where: {
+            realm_id: { in: userRealmIds },
+        },
         orderBy: { stamp_created: 'desc' },
         take: limit,
     })
 }
 
 /**
- * Count signals by status (owner only)
+ * Count signals by status (realm-scoped)
  */
 export async function countSignalsByStatus(
-    user_role: UserRole
+    userId: string
 ): Promise<Record<string, number>> {
-    requireOwner(user_role, 'view signal statistics')
+    const userRealmIds = await getUserRealmIds(userId)
 
     const results = await prisma.signal.groupBy({
         by: ['signal_status'],
+        where: {
+            realm_id: { in: userRealmIds },
+        },
         _count: true,
     })
 
@@ -381,14 +399,19 @@ export async function countSignalsByStatus(
 }
 
 /**
- * Get signal with full relations
+ * Get signal with full relations (realm-scoped)
  */
 export async function getSignalComplete(
     signal_id: string,
-    user_role: UserRole | null = null
+    userId: string
 ): Promise<SignalComplete | null> {
-    const signal = await prisma.signal.findUnique({
-        where: { signal_id },
+    const userRealmIds = await getUserRealmIds(userId)
+
+    return await prisma.signal.findFirst({
+        where: {
+            signal_id,
+            realm_id: { in: userRealmIds },
+        },
         include: {
             synthesis: true,
             clusters: {
@@ -398,16 +421,4 @@ export async function getSignalComplete(
             },
         },
     })
-
-    // Check visibility permissions
-    if (signal && user_role !== 'OWNER') {
-        const visibilityFilter = buildVisibilityFilter(user_role)
-        const allowedLevels = visibilityFilter.signal_visibility?.in || ['PUBLIC']
-
-        if (!allowedLevels.includes(signal.signal_visibility)) {
-            return null // Not authorized to view
-        }
-    }
-
-    return signal
 }

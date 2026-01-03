@@ -9,6 +9,7 @@ import {
 // Base cluster schema
 export const clusterSchema = z.object({
     cluster_id: z.string().length(26).optional(),
+    realm_id: z.string().length(26),
     cluster_type: z.enum(CLUSTER_TYPES),
     cluster_title: z.string().min(1).max(LIMITS.CLUSTER_TITLE_MAX),
     cluster_depth: z.number().int().nonnegative().max(LIMITS.MAX_CLUSTER_DEPTH).default(0),
@@ -30,6 +31,7 @@ export const clusterSchema = z.object({
 
 // Create cluster
 export const createClusterSchema = clusterSchema.pick({
+    realm_id: true,
     cluster_type: true,
     cluster_title: true,
     cluster_depth: true,

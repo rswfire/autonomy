@@ -31,12 +31,63 @@ datasource db {
 
 
 //
+// REALM -- SOVEREIGN TERRITORY FOR SIGNALS AND SYNTHESIS
+//
+
+model Realm {
+  realm_id          String   @id @db.VarChar(26)
+  realm_type        String   @default("PRIVATE") @db.VarChar(20)  // PRIVATE | PUBLIC | SHARED
+  realm_name        String   @db.VarChar(100)
+  realm_description String?  @db.Text
+
+  user_id           String   @db.VarChar(26)
+  creator           User     @relation("RealmCreator", fields: [user_id], references: [user_id])
+
+  flag_registry     Boolean @default(false)
+
+  stamp_created     DateTime @default(now())
+  stamp_updated     DateTime? @updatedAt
+
+  members  RealmUser[]
+  signals  Signal[]
+  clusters Cluster[]
+  synthesis Synthesis[]
+
+  @@map("realms")
+  @@index([realm_type], map: "idx_realm_realm-type")
+  @@index([user_id], map: "idx_realm_user-id")
+  @@index([flag_registry], map: "idx_realm_flag-registry")
+  @@index([stamp_created], map: "idx_realm_stamp-created")
+}
+
+model RealmUser {
+  realm_id      String   @db.VarChar(26)
+  user_id       String   @db.VarChar(26)
+
+  realm         Realm    @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
+  user          User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  user_role     String   @default("OBSERVER") @db.VarChar(20)  // OWNER | CONTRIBUTOR | OBSERVER
+  stamp_joined  DateTime @default(now())
+
+  @@id([realm_id, user_id])
+  @@map("realms_users")
+  @@index([realm_id], map: "idx_realmuser_realm-id")
+  @@index([user_id], map: "idx_realmuser_user-id")
+  @@index([user_role], map: "idx_realmuser_member-role")
+}
+
+
+//
 //  SIGNAL -- THE ATOMIC UNIT OF LIVED DATA
 //
 
 model Signal {
 
   signal_id           String   @id @db.VarChar(26)
+  realm_id            String   @db.VarChar(26)
+  realm               Realm    @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
+
   signal_type         String   @db.VarChar(50)
   signal_title        String   @db.VarChar(100)
   signal_description  String?  @db.Text
@@ -54,7 +105,7 @@ model Signal {
   ${isPostgres
     ? 'signal_embedding Unsupported("vector(1536)")?'
     : 'signal_embedding Json? @db.Json'
-  }
+}
 
   stamp_created   DateTime   @default(now())
   stamp_updated   DateTime?  @updatedAt
@@ -64,16 +115,17 @@ model Signal {
   clusters     ClusterSignal[]
 
   @@map("signals")
-  @@index([signal_type],       map: "idx_signal-type")
-  @@index([signal_title],      map: "idx_signal-title")
-  @@index([signal_author],     map: "idx_signal-author")
-  @@index([signal_status],     map: "idx_signal-status")
+  @@index([realm_id], map: "idx_signal_realm-id")
+  @@index([signal_type], map: "idx_signal-type")
+  @@index([signal_title], map: "idx_signal-title")
+  @@index([signal_author], map: "idx_signal-author")
+  @@index([signal_status], map: "idx_signal-status")
   @@index([signal_visibility], map: "idx_signal-visibility")
   ${!isPostgres ? '@@index([signal_latitude], map: "idx_signal_signal-latitude")' : ''}
   ${!isPostgres ? '@@index([signal_longitude], map: "idx_signal_signal-longitude")' : ''}
   ${!isPostgres ? '@@index([signal_latitude, signal_longitude], map: "idx_signal_signal-latitude_signal_signal-longitude")' : ''}
-  @@index([stamp_created],     map: "idx_signal_stamp-created")
-  @@index([stamp_imported],    map: "idx_signal_stamp-imported")
+  @@index([stamp_created], map: "idx_signal_stamp-created")
+  @@index([stamp_imported], map: "idx_signal_stamp-imported")
 
 }
 
@@ -85,6 +137,9 @@ model Signal {
 model Cluster {
 
   cluster_id     String  @id @db.VarChar(26)
+  realm_id       String  @db.VarChar(26)
+  realm          Realm   @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
+
   cluster_type   String  @db.VarChar(50)
   cluster_title  String  @db.VarChar(100)
   cluster_depth  Int     @default(0)
@@ -98,7 +153,7 @@ model Cluster {
   ${isPostgres
     ? 'cluster_embedding Unsupported("vector(1536)")?'
     : 'cluster_embedding Json? @db.Json'
-  }
+}
 
   stamp_cluster_start DateTime?
   stamp_cluster_end   DateTime?
@@ -112,6 +167,7 @@ model Cluster {
   synthesis  Synthesis[] @relation("SynthesisToCluster")
 
   @@map("clusters")
+  @@index([realm_id], map: "idx_cluster_realm-id")
   @@index([cluster_type], map: "idx_cluster_cluster-type")
   @@index([cluster_title], map: "idx_cluster_cluster-title")
   @@index([cluster_depth], map: "idx_cluster_cluster-depth")
@@ -150,6 +206,9 @@ model ClusterSignal {
 model Synthesis {
 
   synthesis_id       String   @id @db.VarChar(26)
+  realm_id           String   @db.VarChar(26)
+  realm              Realm    @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
+
   synthesis_type     String   @db.VarChar(50)  // METADATA | REFLECTION
   synthesis_subtype  String   @db.VarChar(50)  // SURFACE, STRUCTURE, PATTERNS | MIRROR, MYTH, NARRATIVE
   synthesis_source   String?  @db.VarChar(100)
@@ -175,6 +234,7 @@ model Synthesis {
   stamp_updated  DateTime?  @updatedAt
 
   @@map("synthesis")
+  @@index([realm_id], map: "idx_synthesis_realm-id")
   @@index([synthesis_type], map: "idx_synthesis_synthesis-type")
   @@index([synthesis_subtype], map: "idx_synthesis_synthesis-subtype")
   @@index([synthesis_type, synthesis_subtype], map: "idx_synthesis_synthesis-type_synthesis-subtype")
@@ -205,6 +265,9 @@ model User {
 
   stamp_created  DateTime   @default(now())
   stamp_updated  DateTime?  @updatedAt
+
+  created_realms  Realm[]        @relation("RealmCreator")
+  realm_memberships RealmUser[]
 
   @@map("users")
   @@index([user_email], map: "idx_user_user-email")

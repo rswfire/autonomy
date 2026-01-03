@@ -3,7 +3,7 @@
 
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
-import {useMemo, useState} from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { FormSection } from './FormSection'
@@ -14,6 +14,7 @@ import { Select } from '../ui/Select'
 import { JsonEditor } from './JsonEditor'
 import { Controller } from 'react-hook-form'
 import { SIGNAL_TYPES, SIGNAL_STATUS, SIGNAL_VISIBILITY } from '@/lib/constants'
+import type { Realm } from '@/lib/types'
 
 interface SignalFormProps {
     mode: 'create' | 'edit'
@@ -25,6 +26,8 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [realms, setRealms] = useState<Realm[]>([])
+    const [loadingRealms, setLoadingRealms] = useState(true)
 
     // Determine database type from defaultValues instead
     const usePostgres = useMemo(() => {
@@ -42,11 +45,39 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
         signal_payload: defaultValues.signal_payload ? JSON.stringify(defaultValues.signal_payload, null, 2) : '',
         signal_tags: defaultValues.signal_tags ? JSON.stringify(defaultValues.signal_tags, null, 2) : '',
         signal_location: defaultValues.signal_location ? JSON.stringify(defaultValues.signal_location, null, 2) : '',
-    } : undefined
+    } : {
+        realm_id: '', // Will be set when realms load
+        signal_type: 'TEXT',
+        signal_status: 'PENDING',
+        signal_visibility: 'PUBLIC',
+    }
 
-    const { register, control, handleSubmit, formState: { errors } } = useForm({
-        defaultValues: formDefaults,  // ← Use pre-processed defaults
+    const { register, control, handleSubmit, setValue, formState: { errors } } = useForm({
+        defaultValues: formDefaults,
     })
+
+    // Load user's realms
+    useEffect(() => {
+        async function loadRealms() {
+            try {
+                const res = await fetch('/api/admin/realms')
+                if (!res.ok) throw new Error('Failed to load realms')
+
+                const data = await res.json()
+                setRealms(data)
+
+                // Set first realm as default if creating new signal
+                if (mode === 'create' && data.length > 0 && !defaultValues?.realm_id) {
+                    setValue('realm_id', data[0].realm_id)
+                }
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load realms')
+            } finally {
+                setLoadingRealms(false)
+            }
+        }
+        loadRealms()
+    }, [mode, defaultValues, setValue])
 
     const onSubmit = async (data: any) => {
         setIsSubmitting(true)
@@ -93,6 +124,19 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
         }
     }
 
+    if (loadingRealms) {
+        return <div className="text-gray-600">Loading realms...</div>
+    }
+
+    if (realms.length === 0) {
+        return (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+                <p className="font-medium">No realms found</p>
+                <p className="text-sm mt-1">You need at least one realm to create signals.</p>
+            </div>
+        )
+    }
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {error && (
@@ -103,6 +147,27 @@ export function SignalForm({ mode, defaultValues, onSuccess }: SignalFormProps) 
             )}
 
             <Card title={mode === 'create' ? 'Create Signal' : 'Edit Signal'}>
+                <FormSection title="Realm" description="Select the realm this signal belongs to">
+                    <FormField label="Realm" name="realm_id" required error={errors.realm_id?.message as string}>
+                        <Select
+                            {...register('realm_id', { required: 'Realm is required' })}
+                            disabled={mode === 'edit'} // Can't change realm after creation
+                        >
+                            <option value="">Select Realm</option>
+                            {realms.map(realm => (
+                                <option key={realm.realm_id} value={realm.realm_id}>
+                                    {realm.realm_name}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+                    {mode === 'edit' && (
+                        <p className="text-sm text-gray-500 mt-2">
+                            Realm cannot be changed after signal creation
+                        </p>
+                    )}
+                </FormSection>
+
                 <FormSection title="Core Information" description="Basic signal details">
                     <FormField label="Type" name="signal_type" required error={errors.signal_type?.message as string}>
                         <Select {...register('signal_type', { required: 'Type is required' })}>

@@ -3,7 +3,7 @@
 
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { FormSection } from './FormSection'
@@ -13,6 +13,7 @@ import { Select } from '../ui/Select'
 import { JsonEditor } from './JsonEditor'
 import { Controller } from 'react-hook-form'
 import { CLUSTER_TYPES, CLUSTER_STATES } from '@/lib/constants'
+import type { Realm } from '@/lib/types'
 
 interface ClusterFormProps {
     mode: 'create' | 'edit'
@@ -24,6 +25,8 @@ export function ClusterForm({ mode, defaultValues, onSuccess }: ClusterFormProps
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [realms, setRealms] = useState<Realm[]>([])
+    const [loadingRealms, setLoadingRealms] = useState(true)
 
     const formDefaults = defaultValues ? {
         ...defaultValues,
@@ -31,11 +34,39 @@ export function ClusterForm({ mode, defaultValues, onSuccess }: ClusterFormProps
         cluster_metadata: defaultValues.cluster_metadata ? JSON.stringify(defaultValues.cluster_metadata, null, 2) : '',
         cluster_payload: defaultValues.cluster_payload ? JSON.stringify(defaultValues.cluster_payload, null, 2) : '',
         cluster_tags: defaultValues.cluster_tags ? JSON.stringify(defaultValues.cluster_tags, null, 2) : '',
-    } : undefined
+    } : {
+        realm_id: '', // Will be set when realms load
+        cluster_type: 'THEMATIC',
+        cluster_state: 'DRAFT',
+        cluster_depth: 0,
+    }
 
-    const { register, control, handleSubmit, formState: { errors } } = useForm({
+    const { register, control, handleSubmit, setValue, formState: { errors } } = useForm({
         defaultValues: formDefaults,
     })
+
+    // Load user's realms
+    useEffect(() => {
+        async function loadRealms() {
+            try {
+                const res = await fetch('/api/admin/realms')
+                if (!res.ok) throw new Error('Failed to load realms')
+
+                const data = await res.json()
+                setRealms(data)
+
+                // Set first realm as default if creating new cluster
+                if (mode === 'create' && data.length > 0 && !defaultValues?.realm_id) {
+                    setValue('realm_id', data[0].realm_id)
+                }
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load realms')
+            } finally {
+                setLoadingRealms(false)
+            }
+        }
+        loadRealms()
+    }, [mode, defaultValues, setValue])
 
     const onSubmit = async (data: any) => {
         setIsSubmitting(true)
@@ -79,6 +110,19 @@ export function ClusterForm({ mode, defaultValues, onSuccess }: ClusterFormProps
         }
     }
 
+    if (loadingRealms) {
+        return <div className="text-gray-600">Loading realms...</div>
+    }
+
+    if (realms.length === 0) {
+        return (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+                <p className="font-medium">No realms found</p>
+                <p className="text-sm mt-1">You need at least one realm to create clusters.</p>
+            </div>
+        )
+    }
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {error && (
@@ -89,6 +133,27 @@ export function ClusterForm({ mode, defaultValues, onSuccess }: ClusterFormProps
             )}
 
             <Card title={mode === 'create' ? 'Create Cluster' : 'Edit Cluster'}>
+                <FormSection title="Realm" description="Select the realm this cluster belongs to">
+                    <FormField label="Realm" name="realm_id" required error={errors.realm_id?.message as string}>
+                        <Select
+                            {...register('realm_id', { required: 'Realm is required' })}
+                            disabled={mode === 'edit'} // Can't change realm after creation
+                        >
+                            <option value="">Select Realm</option>
+                            {realms.map(realm => (
+                                <option key={realm.realm_id} value={realm.realm_id}>
+                                    {realm.realm_name}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
+                    {mode === 'edit' && (
+                        <p className="text-sm text-gray-500 mt-2">
+                            Realm cannot be changed after cluster creation
+                        </p>
+                    )}
+                </FormSection>
+
                 <FormSection title="Core Information" description="Basic cluster details">
                     <FormField label="Type" name="cluster_type" required error={errors.cluster_type?.message as string}>
                         <Select {...register('cluster_type', { required: 'Type is required' })}>

@@ -13,7 +13,7 @@ export default async function EditSignalPage({
 }) {
     const { id } = await params
     const user = await requireAuth()
-    const signal = await getSignalById(id, user.role)
+    const signal = await getSignalById(id, user.user_id)
 
     if (!signal) {
         notFound()

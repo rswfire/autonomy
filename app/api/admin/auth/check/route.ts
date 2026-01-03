@@ -1,21 +1,22 @@
-// app/api/admin/auth/check/route.ts
-import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/utils/auth'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/utils/auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
-        const user = await getCurrentUser()
-
-        if (!user) {
-            return NextResponse.json({ authenticated: false, role: null })
-        }
+        const user = await requireAuth(request)
 
         return NextResponse.json({
             authenticated: true,
             role: user.role,
+            user_id: user.user_id,
             email: user.email
         })
-    } catch (error) {
-        return NextResponse.json({ authenticated: false, role: null })
+    } catch {
+        return NextResponse.json({
+            authenticated: false,
+            role: null,
+            user_id: null,
+            email: null
+        })
     }
 }
