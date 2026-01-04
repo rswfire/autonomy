@@ -96,10 +96,15 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
     })
 
     const [latitude, setLatitude] = useState<string>(
-        defaultValues?.signal_location?.coordinates?.[1]?.toString() || ''
+        defaultValues?.signal_location?.coordinates?.[1]?.toString() ||
+        defaultValues?.signal_latitude?.toString() ||
+        ''
     )
+
     const [longitude, setLongitude] = useState<string>(
-        defaultValues?.signal_location?.coordinates?.[0]?.toString() || ''
+        defaultValues?.signal_location?.coordinates?.[0]?.toString() ||
+        defaultValues?.signal_longitude?.toString() ||
+        ''
     )
 
     const signalType = watch('signal_type')
@@ -266,18 +271,18 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                 }
             })
 
-            // Convert lat/lng to appropriate format
+            // Convert lat/lng to coordinates object (server handles DB-specific format)
             if (latitude && longitude) {
-                if (isPostgres) {
-                    processedData.signal_location = {
-                        type: 'Point',
-                        coordinates: [parseFloat(longitude), parseFloat(latitude)]
-                    }
-                } else {
-                    processedData.signal_latitude = parseFloat(latitude)
-                    processedData.signal_longitude = parseFloat(longitude)
+                processedData.coordinates = {
+                    latitude: parseFloat(latitude),
+                    longitude: parseFloat(longitude)
                 }
             }
+
+            // Delete fields that server doesn't need
+            delete processedData.latitude
+            delete processedData.longitude
+            delete processedData.signal_location  // Server handles this via coordinates
 
             // Parse tags
             if (processedData.signal_tags && typeof processedData.signal_tags === 'string') {
@@ -305,10 +310,9 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
 
                 // Flag for re-synthesis
                 processedData.trigger_synthesis = true
-
-                // Clean up temp field
-                delete processedData.new_annotation
             }
+
+            delete processedData.new_annotation
 
             const url = mode === 'create'
                 ? '/api/admin/signals'
@@ -334,7 +338,7 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
             toast.error('Failed to save signal', {
                 description: message,
                 duration: 5000,
-        })
+            })
         } finally {
             setIsSubmitting(false)
         }

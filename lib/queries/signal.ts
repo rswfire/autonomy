@@ -162,21 +162,40 @@ export async function updateSignal(
         throw new Error('Not authorized to update this signal')
     }
 
-    const geoData = coordinates
-        ? isPostgres
-            ? {
-                signal_location: {
-                    type: 'Point',
-                    coordinates: [coordinates.longitude, coordinates.latitude],
-                } as Prisma.InputJsonValue,
-            }
-            : {
-                signal_latitude: coordinates.latitude,
-                signal_longitude: coordinates.longitude,
-            }
-        : {}
+    // Handle PostGIS location update separately (Unsupported type requires raw SQL)
+    if (isPostgres && coordinates) {
+        await prisma.$executeRaw`
+            UPDATE signals
+            SET signal_location = ST_GeomFromGeoJSON(${JSON.stringify({
+            type: 'Point',
+            coordinates: [coordinates.longitude, coordinates.latitude]
+        })})
+            WHERE signal_id = ${signal_id}
+        `
+    }
 
-    // Append to history if provided, otherwise add update entry
+    // Handle clearing location if coordinates is explicitly null
+    if (isPostgres && coordinates === null) {
+        await prisma.$executeRaw`
+            UPDATE signals
+            SET signal_location = NULL
+            WHERE signal_id = ${signal_id}
+        `
+    }
+
+    // Build geo data for MySQL only
+    const geoData: any = {}
+    if (!isPostgres) {
+        if (coordinates) {
+            geoData.signal_latitude = coordinates.latitude
+            geoData.signal_longitude = coordinates.longitude
+        } else if (coordinates === null) {
+            geoData.signal_latitude = null
+            geoData.signal_longitude = null
+        }
+    }
+
+    // Append to history
     let updatedHistory = signal.signal_history as any[] || []
     if (signal_history) {
         updatedHistory = signal_history as any[]
@@ -192,11 +211,12 @@ export async function updateSignal(
         }
     }
 
+    // Update everything EXCEPT signal_location (handled above for PostGIS)
     return await prisma.signal.update({
         where: { signal_id },
         data: {
             ...rest,
-            ...geoData,
+            ...geoData,  // Only has data for MySQL
             ...(signal_metadata !== undefined && { signal_metadata: signal_metadata as Prisma.InputJsonValue }),
             ...(signal_payload !== undefined && { signal_payload: signal_payload as Prisma.InputJsonValue }),
             ...(signal_tags !== undefined && { signal_tags: signal_tags as Prisma.InputJsonValue }),

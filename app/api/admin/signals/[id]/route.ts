@@ -98,7 +98,7 @@ export async function PATCH(
         const signal = await updateSignal(validated, user.user_id)
 
         return NextResponse.json({ signal })
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof Error && error.message === 'Unauthorized') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
@@ -110,9 +110,12 @@ export async function PATCH(
             )
         }
 
-        console.error('Error updating signal:', error)
         return NextResponse.json(
-            { error: 'Failed to update signal' },
+            {
+                error: 'Failed to update signal',
+                message: error?.message,
+                details: error?.stack
+            },
             { status: 500 }
         )
     }
