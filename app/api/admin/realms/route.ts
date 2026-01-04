@@ -5,9 +5,9 @@ import { getUserRealms, createRealm } from '@/lib/queries/realm'
 import { createRealmSchema } from '@/lib/validation/realm'
 
 export async function GET(request: NextRequest) {
-    const user = await requireAuthAPI ()
-    const realms = await getUserRealms(user.user_id)
-    return NextResponse.json(realms)
+    const user = await requireAuthAPI()
+    const realmData = await getUserRealms({ userId: user.user_id })
+    return NextResponse.json(realmData.realms)
 }
 
 export async function POST(request: NextRequest) {
