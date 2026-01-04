@@ -6,16 +6,21 @@ import type { Realm, RealmUser } from '@/lib/types'
 /**
  * Get realms user has access to
  */
-export async function getUserRealms(userId: string): Promise<Realm[]> {
-    return await prisma.realm.findMany({
+export async function getUserRealms(filter: { userId: string }): Promise<{ realms: Realm[], total: number }> {
+    const realms = await prisma.realm.findMany({
         where: {
             OR: [
-                { user_id: userId }, // Created by user
-                { members: { some: { user_id: userId } } }, // Member of realm
+                { user_id: filter.userId },
+                { members: { some: { user_id: filter.userId } } },
             ],
         },
         orderBy: { stamp_created: 'desc' },
     })
+
+    return {
+        realms,
+        total: realms.length
+    }
 }
 
 /**
