@@ -145,20 +145,17 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                 processedData.signal_payload = {
                     file_path: data.payload_file_path,
                     transcript: data.payload_transcript,
-                    timed_transcript: typeof data.payload_timed_transcript === 'string'
-                        ? JSON.parse(data.payload_timed_transcript)
-                        : data.payload_timed_transcript,
+                    timed_transcript: data.payload_timed_transcript
+                        ? (typeof data.payload_timed_transcript === 'string'
+                            ? JSON.parse(data.payload_timed_transcript)
+                            : data.payload_timed_transcript)
+                        : undefined,
                 }
-                processedData.signal_metadata = {
+
+                // Build nested metadata structure
+                const metadata: any = {
                     source_type: data.metadata_source_type,
                     source_url: data.metadata_source_url,
-                    youtube_id: data.metadata_youtube_id,
-                    youtube_channel: data.metadata_youtube_channel,
-                    youtube_published_at: data.metadata_youtube_published_at,
-                    youtube_thumbnail: data.metadata_youtube_thumbnail,
-                    timestamps: typeof data.metadata_timestamps === 'string'
-                        ? JSON.parse(data.metadata_timestamps)
-                        : data.metadata_timestamps,
                     duration: data.metadata_duration,
                     bitrate: data.metadata_bitrate,
                     sample_rate: data.metadata_sample_rate,
@@ -166,12 +163,58 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                     codec: data.metadata_codec,
                     file_size: data.metadata_file_size,
                     mime_type: data.metadata_mime_type,
-                    width: data.metadata_width,
-                    height: data.metadata_height,
-                    framerate: data.metadata_framerate,
-                    has_transcript: data.metadata_has_transcript === 'true',
-                    transcript_method: data.metadata_transcript_method,
                 }
+
+                // Source-specific nested data
+                if (data.metadata_source_type === 'youtube') {
+                    metadata.youtube = {
+                        id: data.metadata_youtube_id,
+                        channel: data.metadata_youtube_channel,
+                        channel_id: data.metadata_youtube_channel_id,
+                        published_at: data.metadata_youtube_published_at,
+                        thumbnail: data.metadata_youtube_thumbnail,
+                    }
+                } else if (data.metadata_source_type === 'vimeo') {
+                    metadata.vimeo = {
+                        id: data.metadata_vimeo_id,
+                        user: data.metadata_vimeo_user,
+                        uploaded_at: data.metadata_vimeo_uploaded_at,
+                    }
+                } else if (data.metadata_source_type === 'podcast') {
+                    metadata.podcast = {
+                        show: data.metadata_podcast_show,
+                        episode: data.metadata_podcast_episode,
+                        published_at: data.metadata_podcast_published_at,
+                        feed_url: data.metadata_podcast_feed_url,
+                    }
+                }
+
+                // Video properties (if present)
+                if (data.metadata_video_width || data.metadata_video_height || data.metadata_video_framerate) {
+                    metadata.video = {
+                        width: data.metadata_video_width,
+                        height: data.metadata_video_height,
+                        framerate: data.metadata_video_framerate,
+                    }
+                }
+
+                // Transcript metadata (if present)
+                if (data.metadata_transcript_method) {
+                    metadata.transcript = {
+                        method: data.metadata_transcript_method,
+                        language: data.metadata_transcript_language,
+                        confidence: data.metadata_transcript_confidence,
+                    }
+                }
+
+                // Timestamps (if present)
+                if (data.metadata_timestamps) {
+                    metadata.timestamps = typeof data.metadata_timestamps === 'string'
+                        ? JSON.parse(data.metadata_timestamps)
+                        : data.metadata_timestamps
+                }
+
+                processedData.signal_metadata = metadata
             } else if (signalType === 'CONVERSATION') {
                 processedData.signal_payload = {
                     messages: data.payload_messages || [],
@@ -217,6 +260,28 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                 } catch {
                     // Keep as string if invalid
                 }
+            }
+
+            if (processedData.new_annotation?.trim()) {
+                const existingAnnotations = defaultValues?.signal_annotations || {user_notes: []}
+
+                processedData.signal_annotations = {
+                    ...existingAnnotations,
+                    user_notes: [
+                        ...(existingAnnotations.user_notes || []),
+                        {
+                            timestamp: new Date().toISOString(),
+                            note: processedData.new_annotation.trim(),
+                            user_id: 'current_user_id', // Get from auth context
+                        }
+                    ]
+                }
+
+                // Flag for re-synthesis
+                processedData.trigger_synthesis = true
+
+                // Clean up temp field
+                delete processedData.new_annotation
             }
 
             const url = mode === 'create'
@@ -445,6 +510,64 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                     {!signalType && (
                         <p className="text-gray-500 italic">Select a signal type to configure data fields</p>
                     )}
+                </FormSection>
+
+                <FormSection
+                    title="History & Annotations"
+                    description="Audit trail and user context for synthesis"
+                >
+                    {/* History - Read-only */}
+                    {mode === 'edit' && defaultValues?.signal_history && (
+                        <div className="mb-6">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">History</h4>
+                            <div className="bg-gray-50 rounded border border-gray-200 p-4 max-h-64 overflow-y-auto">
+                                {(defaultValues.signal_history as SignalHistory).map((entry, idx) => (
+                                    <div key={idx} className="text-sm mb-2 last:mb-0">
+                                        <span className="text-gray-500 font-mono">{entry.timestamp}</span>
+                                        <span className="mx-2">→</span>
+                                        <span className="font-medium">{entry.action}</span>
+                                        {entry.field && <span className="text-gray-600 ml-2">({entry.field})</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Annotations - Editable */}
+                    <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Annotations</h4>
+
+                        {/* Existing annotations - read-only */}
+                        {defaultValues?.signal_annotations?.user_notes && (
+                            <div className="bg-blue-50 rounded border border-blue-200 p-4 mb-4 max-h-48 overflow-y-auto">
+                                {defaultValues.signal_annotations.user_notes.map((note: any, idx: number) => (
+                                    <div key={idx} className="text-sm mb-3 last:mb-0 pb-3 last:pb-0 border-b border-blue-200 last:border-0">
+                                        <div className="text-gray-500 font-mono text-xs mb-1">{note.timestamp}</div>
+                                        <div className="text-gray-800">{note.note}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* New annotation input */}
+                        <FormField
+                            label="Add Annotation"
+                            name="new_annotation"
+                            description="Context for synthesis pipeline — triggers re-processing"
+                        >
+                            <Textarea
+                                {...register('new_annotation')}
+                                rows={3}
+                                placeholder="Add context, corrections, or synthesis instructions..."
+                            />
+                        </FormField>
+
+                        {watch('new_annotation') && (
+                            <p className="text-sm text-orange-600 mt-2">
+                                ⚠️ Saving this annotation will trigger signal re-synthesis
+                            </p>
+                        )}
+                    </div>
                 </FormSection>
 
                 <div className="flex gap-3 pt-8 border-t border-gray-200">

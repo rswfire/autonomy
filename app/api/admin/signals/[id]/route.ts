@@ -41,8 +41,52 @@ export async function PATCH(
     const params = await context.params
 
     try {
-        const user = await requireAuthAPI ()
+        const user = await requireAuthAPI()
         const body = await request.json()
+
+        // Handle annotation addition
+        if (body.new_annotation?.trim()) {
+            const existing = await db.signal.findUnique({
+                where: { signal_id: params.id },
+                select: { signal_annotations: true, signal_history: true }
+            })
+
+            if (!existing) {
+                return NextResponse.json({ error: 'Signal not found' }, { status: 404 })
+            }
+
+            // Add new annotation
+            const existingAnnotations = (existing.signal_annotations as any) || { user_notes: [] }
+            body.signal_annotations = {
+                ...existingAnnotations,
+                user_notes: [
+                    ...(existingAnnotations.user_notes || []),
+                    {
+                        timestamp: new Date().toISOString(),
+                        note: body.new_annotation.trim(),
+                        user_id: user.user_id,
+                    }
+                ]
+            }
+
+            // Add history entry
+            const historyEntry = {
+                timestamp: new Date().toISOString(),
+                action: 'annotation_added',
+                field: 'signal_annotations',
+                user_id: user.user_id,
+            }
+            body.signal_history = [
+                ...((existing.signal_history as any) || []),
+                historyEntry
+            ]
+
+            // TODO: Queue synthesis job when Phase 4 is ready
+            // await queueSynthesis({ signal_id: params.id, reason: 'annotation_added' })
+
+            delete body.new_annotation
+            delete body.trigger_synthesis
+        }
 
         const dataWithId = {
             signal_id: params.id,

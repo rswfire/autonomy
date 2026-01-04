@@ -88,21 +88,64 @@ export type TransmissionPayload = {
     mime_type?: string
 }
 
-export type TransmissionMetadata = {
+type TransmissionMetadata = {
     source_type?: 'local' | 'youtube' | 'vimeo' | 'podcast'
-    youtube_id?: string
-    youtube_channel?: string
-    youtube_published_at?: string
+    source_url?: string
+
+    // Source-specific data (discriminated by source_type)
+    youtube?: {
+        id: string
+        channel: string
+        channel_id?: string
+        published_at: string
+        thumbnail: string
+        view_count?: number
+        like_count?: number
+    }
+
+    vimeo?: {
+        id: string
+        user: string
+        uploaded_at: string
+    }
+
+    podcast?: {
+        show: string
+        episode: string
+        published_at: string
+        feed_url?: string
+    }
+
+    // Technical metadata (applies to all)
     duration?: number
     bitrate?: number
     sample_rate?: number
     channels?: number
     codec?: string
     file_size?: number
-    // Video-specific
-    width?: number
-    height?: number
-    framerate?: number
+    mime_type?: string
+
+    // Video-specific (when applicable)
+    video?: {
+        width: number
+        height: number
+        framerate: number
+    }
+
+    // Transcription metadata
+    transcript?: {
+        method: 'whisper' | 'manual' | 'youtube_auto' | 'imported'
+        language?: string
+        confidence?: number
+        processed_at?: string
+    }
+
+    // Timestamps (chapters/markers)
+    timestamps?: Array<{
+        time: number  // seconds
+        label: string
+        description?: string
+    }>
 }
 
 export type ConversationPayload = {
