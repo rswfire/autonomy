@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSignalById, updateSignal, deleteSignal } from '@/lib/queries/signal'
 import { updateSignalSchema } from '@/lib/validation/signal'
 import { requireAuthAPI  } from '@/lib/utils/auth'
+import db from "@/lib/db";
 
 export async function GET(
     request: NextRequest,

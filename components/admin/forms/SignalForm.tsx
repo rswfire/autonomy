@@ -15,7 +15,7 @@ import { Select } from '../ui/Select'
 import { JsonEditor } from './JsonEditor'
 import { Controller } from 'react-hook-form'
 import { SIGNAL_TYPES, SIGNAL_CONTEXT, SIGNAL_STATUS, SIGNAL_VISIBILITY, DEFAULTS } from '@/lib/constants'
-import type { Realm } from '@/lib/types'
+import type { Realm, SignalHistory } from '@/lib/types'
 import { TagInput } from '../ui/TagInput'
 
 import { DocumentFields } from './signal/DocumentFields'
