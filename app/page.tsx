@@ -1,6 +1,22 @@
 // app/page.tsx
 import Link from 'next/link'
 import Icon from "@/components/Icon";
+import { VideoCarousel } from '@/components/VideoCarousel'
+
+const autonomyVideos = [
+    {
+        id: '01KE0MJGY36CX4PZ9ZH1PF0N3V',
+        title: 'Announcing Open Source Signal Processing System',
+        youtube_id: 'pksrc69dp6I',
+        thumbnail: 'https://i.ytimg.com/vi/pksrc69dp6I/maxresdefault.jpg',
+    },
+    {
+        id: '01KE59PRNGK48FBJ30R84F8XFB',
+        title: 'Demonstrating Autonomy Admin Interface and Signal Management',
+        youtube_id: 'suJQC6pezDc',
+        thumbnail: 'https://i.ytimg.com/vi/suJQC6pezDc/sddefault.jpg',
+    },
+]
 
 export default function HomePage() {
     return (
@@ -17,26 +33,10 @@ export default function HomePage() {
                     </p>
                 </div>
 
-                {/* Video */}
-                <div className="mb-16">
-                    <div className="relative w-full max-w-4xl mx-auto rounded-lg overflow-hidden shadow-2xl bg-black">
-                        <div className="relative pt-[56.25%]">
-                            <iframe
-                                className="absolute top-0 left-0 w-full h-full"
-                                src="https://www.youtube.com/embed/pksrc69dp6I"
-                                title="Introducing Autonomy"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                            />
-                        </div>
-                    </div>
-                    <p className="text-center text-sm text-gray-500 mt-4">
-                        Signal 001 - Introducing Autonomy
-                    </p>
-                </div>
+                <VideoCarousel videos={autonomyVideos} />
 
                 {/* Philosophy */}
-                <div className="max-w-3xl mx-auto mb-16">
+                <div className="mt-12 max-w-3xl mx-auto mb-16">
                     <div className="bg-white rounded-lg shadow-md p-8">
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">
                             What is Autonomy?
