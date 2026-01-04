@@ -50,6 +50,9 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
     const [realms, setRealms] = useState<Realm[]>([])
     const [loadingRealms, setLoadingRealms] = useState(true)
 
+    const [historyEntries, setHistoryEntries] = useState(defaultValues?.signal_history || [])
+    const [annotations, setAnnotations] = useState(defaultValues?.signal_annotations || {})
+
     const formDefaults = defaultValues ? {
         ...defaultValues,
         signal_metadata: defaultValues.signal_metadata ? JSON.stringify(defaultValues.signal_metadata, null, 2) : '',
@@ -67,7 +70,6 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
         })(),
         signal_location: defaultValues.signal_location ? JSON.stringify(defaultValues.signal_location, null, 2) : '',
 
-        // Flatten YouTube data from nested structure for form fields
         metadata_source_type: defaultValues.signal_metadata?.source_type || '',
         metadata_source_url: defaultValues.signal_metadata?.source_url || '',
         metadata_youtube_id: defaultValues.signal_metadata?.youtube?.id || '',
@@ -77,11 +79,22 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
         metadata_youtube_thumbnail: defaultValues.signal_metadata?.youtube?.thumbnail || '',
         metadata_duration: defaultValues.signal_metadata?.duration || '',
 
-        // Flatten payload data for transmission type
         payload_file_path: defaultValues.signal_payload?.file_path || '',
         payload_transcript: defaultValues.signal_payload?.transcript || '',
         payload_timed_transcript: defaultValues.signal_payload?.timed_transcript ?
             JSON.stringify(defaultValues.signal_payload.timed_transcript, null, 2) : '',
+
+        metadata_transcript_method: defaultValues.signal_metadata?.transcript?.method || '',
+        metadata_transcript_language: defaultValues.signal_metadata?.transcript?.language || '',
+        metadata_transcript_confidence: defaultValues.signal_metadata?.transcript?.confidence || '',
+        metadata_transcript_processed_at: defaultValues.signal_metadata?.transcript?.processed_at || '',
+
+        metadata_video_width: defaultValues.signal_metadata?.video?.width || '',
+        metadata_video_height: defaultValues.signal_metadata?.video?.height || '',
+        metadata_video_framerate: defaultValues.signal_metadata?.video?.framerate || '',
+
+        metadata_timestamps: defaultValues.signal_metadata?.timestamps ?
+            JSON.stringify(defaultValues.signal_metadata.timestamps, null, 2) : '',
     } : {
         realm_id: '',
         signal_type: 'DOCUMENT',
@@ -264,6 +277,13 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                 }
             }
 
+            if (mode === 'edit' && defaultValues?.signal_metadata?.legacy) {
+                processedData.signal_metadata = {
+                    ...processedData.signal_metadata,
+                    legacy: defaultValues.signal_metadata.legacy,
+                };
+            }
+
             // Clean up temporary form fields
             Object.keys(processedData).forEach(key => {
                 if (key.startsWith('payload_') || key.startsWith('metadata_')) {
@@ -327,6 +347,12 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
             if (!response.ok) {
                 const errorData = await response.json()
                 throw new Error(errorData.error || 'Failed to save signal')
+            }
+
+            const result = await response.json()
+            if (result.signal) {
+                setHistoryEntries(result.signal.signal_history || [])
+                setAnnotations(result.signal.signal_annotations || {})
             }
 
             toast.success(mode === 'create' ? 'Signal created' : 'Signal updated')
@@ -548,11 +574,11 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                     description="Audit trail and user context for synthesis"
                 >
                     {/* History - Read-only */}
-                    {mode === 'edit' && defaultValues?.signal_history && (
+                    {mode === 'edit' && historyEntries.length > 0 && (
                         <div className="mb-6">
                             <h4 className="text-sm font-medium text-gray-700 mb-2">History</h4>
                             <div className="bg-gray-50 rounded border border-gray-200 p-4 max-h-64 overflow-y-auto">
-                                {(defaultValues.signal_history as SignalHistory).map((entry, idx) => (
+                                {historyEntries.map((entry: any, idx: number) => (
                                     <div key={idx} className="text-sm mb-2 last:mb-0">
                                         <span className="text-gray-500 font-mono">{entry.timestamp}</span>
                                         <span className="mx-2">→</span>
@@ -569,9 +595,9 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                         <h4 className="text-sm font-medium text-gray-700 mb-2">Annotations</h4>
 
                         {/* Existing annotations - read-only */}
-                        {defaultValues?.signal_annotations?.user_notes && (
+                        {annotations?.user_notes && annotations.user_notes.length > 0 && (
                             <div className="bg-blue-50 rounded border border-blue-200 p-4 mb-4 max-h-48 overflow-y-auto">
-                                {defaultValues.signal_annotations.user_notes.map((note: any, idx: number) => (
+                                {annotations.user_notes.map((note: any, idx: number) => (
                                     <div key={idx} className="text-sm mb-3 last:mb-0 pb-3 last:pb-0 border-b border-blue-200 last:border-0">
                                         <div className="text-gray-500 font-mono text-xs mb-1">{note.timestamp}</div>
                                         <div className="text-gray-800">{note.note}</div>

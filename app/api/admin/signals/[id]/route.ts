@@ -1,9 +1,10 @@
 // app/api/admin/signals/[id]/route.ts
+// app/api/admin/signals/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { getSignalById, updateSignal, deleteSignal } from '@/lib/queries/signal'
 import { updateSignalSchema } from '@/lib/validation/signal'
-import { requireAuthAPI  } from '@/lib/utils/auth'
-import db from "@/lib/db";
+import { getSignalById, updateSignal, deleteSignal } from '@/lib/queries/signal'
+import { requireAuthAPI } from '@/lib/utils/auth'
+import { db } from '@/lib/db'
 
 export async function GET(
     request: NextRequest,
@@ -45,18 +46,30 @@ export async function PATCH(
         const user = await requireAuthAPI()
         const body = await request.json()
 
+        // Fetch existing signal for history and annotations
+        const existing = await db.signal.findUnique({
+            where: { signal_id: params.id },
+            select: { signal_annotations: true, signal_history: true }
+        })
+
+        if (!existing) {
+            return NextResponse.json({ error: 'Signal not found' }, { status: 404 })
+        }
+
+        // Add update history entry (always happens on any update)
+        const historyEntry = {
+            timestamp: new Date().toISOString(),
+            action: 'updated',
+            user_id: user.user_id,
+        }
+
+        body.signal_history = [
+            ...((existing.signal_history as any) || []),
+            historyEntry
+        ]
+
         // Handle annotation addition
         if (body.new_annotation?.trim()) {
-            const existing = await db.signal.findUnique({
-                where: { signal_id: params.id },
-                select: { signal_annotations: true, signal_history: true }
-            })
-
-            if (!existing) {
-                return NextResponse.json({ error: 'Signal not found' }, { status: 404 })
-            }
-
-            // Add new annotation
             const existingAnnotations = (existing.signal_annotations as any) || { user_notes: [] }
             body.signal_annotations = {
                 ...existingAnnotations,
@@ -70,17 +83,13 @@ export async function PATCH(
                 ]
             }
 
-            // Add history entry
-            const historyEntry = {
+            // Add annotation-specific history entry
+            body.signal_history.push({
                 timestamp: new Date().toISOString(),
                 action: 'annotation_added',
                 field: 'signal_annotations',
                 user_id: user.user_id,
-            }
-            body.signal_history = [
-                ...((existing.signal_history as any) || []),
-                historyEntry
-            ]
+            })
 
             // TODO: Queue synthesis job when Phase 4 is ready
             // await queueSynthesis({ signal_id: params.id, reason: 'annotation_added' })
@@ -120,6 +129,7 @@ export async function PATCH(
         )
     }
 }
+
 
 export async function DELETE(
     request: NextRequest,
