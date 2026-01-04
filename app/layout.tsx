@@ -4,6 +4,7 @@ import { ReactNode } from 'react'
 import { Open_Sans } from 'next/font/google'
 import SiteLayout from '@/components/SiteLayout'
 import './globals.css'
+import {Toaster} from "@/components/admin/ui/Toaster";
 
 const openSans = Open_Sans({
     weight: '400',
@@ -28,6 +29,7 @@ export default function RootLayout({
         <body className={openSans.className}>
         <SiteLayout>
             {children}
+            <Toaster />
         </SiteLayout>
         </body>
         </html>

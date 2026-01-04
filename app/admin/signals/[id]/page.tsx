@@ -5,24 +5,24 @@ import { getSignalById } from '@/lib/queries/signal'
 import { requireAuth } from '@/lib/utils/auth'
 import { notFound } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-export default async function EditSignalPage({
-                                                 params
-                                             }: {
-    params: Promise<{ id: string }>
-}) {
-    const { id } = await params
+export default async function EditSignalPage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = await params
     const user = await requireAuth()
-    const signal = await getSignalById(id, user.user_id)
+    const signal = await getSignalById(resolvedParams.id, user.user_id)
 
     if (!signal) {
         notFound()
     }
 
+    // Convert Decimal to number for client component
+    const signalForClient = {
+        ...signal,
+        signal_temperature: signal.signal_temperature ? Number(signal.signal_temperature) : 0.0,
+    }
+
     return (
         <div className="max-w-5xl mx-auto py-8 px-6">
-            <SignalForm mode="edit" defaultValues={signal} isPostgres={isPostgres} />
+            <SignalForm mode="edit" defaultValues={signalForClient} isPostgres={isPostgres} />
         </div>
     )
 }

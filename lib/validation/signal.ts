@@ -65,6 +65,7 @@ const photoMetadataSchema = z.object({
 
 // TRANSMISSION
 const transmissionMetadataSchema = z.object({
+    legacy: z.any().optional(),
     // Source
     source_type: z.enum(['audio', 'video', 'other']),
     source_url: z.string().optional(),
@@ -260,8 +261,8 @@ export const createSignalSchema = signalSchema.pick({
     signal_metadata: z.record(z.string(), z.unknown()).optional(),
     signal_payload: z.record(z.string(), z.unknown()).optional(),
     signal_tags: z.array(z.string()).optional(),
-    stamp_created: z.date().optional(),
-    stamp_imported: z.date().optional(),
+    stamp_created: z.coerce.date().optional(),
+    stamp_imported: z.coerce.date().optional(),
 })
 
 export const updateSignalSchema = z.object({

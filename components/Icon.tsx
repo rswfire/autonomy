@@ -2,6 +2,7 @@
 import {
     BookOpen,
     Castle,
+    ChevronLeft,
     ChevronRight,
     Compass,
     Database,
@@ -36,6 +37,7 @@ import {
 const iconMap = {
     BookOpen,
     Castle,
+    ChevronLeft,
     ChevronRight,
     Compass,
     Database,

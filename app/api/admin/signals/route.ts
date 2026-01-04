@@ -30,21 +30,29 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const user = await requireAuthAPI ()
+        const user = await requireAuthAPI()
         const body = await request.json()
 
+        // ADD THIS LOGGING
+        console.log('📥 Received signal data:', JSON.stringify(body, null, 2))
+
         const validated = createSignalSchema.parse(body)
+
+        // ADD THIS TOO
+        console.log('✅ Validation passed')
+
         const signal = await createSignal(validated, user.user_id)
 
-        return NextResponse.json({ signal }, { status: 201 })
-    } catch (error) {
+        return NextResponse.json({ signal })
+    } catch (error: any) {
         if (error instanceof Error && error.message === 'Unauthorized') {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        if (error instanceof Error && error.name === 'ZodError') {
+        if (error?.name === 'ZodError') {
+            console.error('Zod validation details:', JSON.stringify(error.issues, null, 2))
             return NextResponse.json(
-                { error: 'Validation failed', details: error },
+                { error: 'Validation failed', details: error.issues },
                 { status: 400 }
             )
         }

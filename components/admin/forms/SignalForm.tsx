@@ -17,7 +17,7 @@ import { Controller } from 'react-hook-form'
 import { SIGNAL_TYPES, SIGNAL_CONTEXT, SIGNAL_STATUS, SIGNAL_VISIBILITY, DEFAULTS } from '@/lib/constants'
 import type { Realm, SignalHistory } from '@/lib/types'
 import { TagInput } from '../ui/TagInput'
-
+import { toast } from 'sonner'
 import { DocumentFields } from './signal/DocumentFields'
 import { PhotoFields } from './signal/PhotoFields'
 import { TransmissionFields } from './signal/TransmissionFields'
@@ -54,8 +54,34 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
         ...defaultValues,
         signal_metadata: defaultValues.signal_metadata ? JSON.stringify(defaultValues.signal_metadata, null, 2) : '',
         signal_payload: defaultValues.signal_payload ? JSON.stringify(defaultValues.signal_payload, null, 2) : '',
-        signal_tags: defaultValues.signal_tags ? JSON.stringify(defaultValues.signal_tags, null, 2) : '',
+        signal_tags: (() => {
+            if (Array.isArray(defaultValues.signal_tags)) return defaultValues.signal_tags;
+            if (typeof defaultValues.signal_tags === 'string') {
+                try {
+                    return JSON.parse(defaultValues.signal_tags);
+                } catch {
+                    return [];
+                }
+            }
+            return [];
+        })(),
         signal_location: defaultValues.signal_location ? JSON.stringify(defaultValues.signal_location, null, 2) : '',
+
+        // Flatten YouTube data from nested structure for form fields
+        metadata_source_type: defaultValues.signal_metadata?.source_type || '',
+        metadata_source_url: defaultValues.signal_metadata?.source_url || '',
+        metadata_youtube_id: defaultValues.signal_metadata?.youtube?.id || '',
+        metadata_youtube_channel: defaultValues.signal_metadata?.youtube?.channel || '',
+        metadata_youtube_channel_id: defaultValues.signal_metadata?.youtube?.channel_id || '',
+        metadata_youtube_published_at: defaultValues.signal_metadata?.youtube?.published_at || '',
+        metadata_youtube_thumbnail: defaultValues.signal_metadata?.youtube?.thumbnail || '',
+        metadata_duration: defaultValues.signal_metadata?.duration || '',
+
+        // Flatten payload data for transmission type
+        payload_file_path: defaultValues.signal_payload?.file_path || '',
+        payload_transcript: defaultValues.signal_payload?.transcript || '',
+        payload_timed_transcript: defaultValues.signal_payload?.timed_transcript ?
+            JSON.stringify(defaultValues.signal_payload.timed_transcript, null, 2) : '',
     } : {
         realm_id: '',
         signal_type: 'DOCUMENT',
@@ -299,14 +325,16 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                 throw new Error(errorData.error || 'Failed to save signal')
             }
 
+            toast.success(mode === 'create' ? 'Signal created' : 'Signal updated')
             if (onSuccess) {
                 onSuccess()
-            } else {
-                router.push('/admin/signals')
-                router.refresh()
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred')
+            const message = err instanceof Error ? err.message : 'An error occurred'
+            toast.error('Failed to save signal', {
+                description: message,
+                duration: 5000,
+        })
         } finally {
             setIsSubmitting(false)
         }
@@ -349,17 +377,16 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                             ))}
                         </Select>
                     </FormField>
-                    {mode === 'edit' && (
-                        <p className="text-sm text-gray-500 mt-2">
-                            Realm cannot be changed after signal creation
-                        </p>
-                    )}
+
                 </FormSection>
 
                 <FormSection title="Core Information" description="Basic signal details">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField label="Type" name="signal_type" required error={errors.signal_type?.message as string}>
-                            <Select {...register('signal_type', { required: 'Type is required' })}>
+                            <Select
+                                {...register('signal_type', { required: 'Type is required' })}
+                                disabled={mode === 'edit'} // ADD THIS
+                            >
                                 <option value="">Select Type</option>
                                 {SIGNAL_TYPES_SORTED.map(type => (
                                     <option key={type} value={type}>{type}</option>
@@ -438,8 +465,8 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres }: Signa
                                     className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                                 />
                                 <span className="text-sm font-mono text-gray-700 min-w-[3rem] text-right">
-            {watch('signal_temperature')?.toFixed(1) ?? '0.0'}
-        </span>
+    {Number(watch('signal_temperature') ?? 0).toFixed(1)}
+</span>
                             </div>
                         </FormField>
                     </div>
