@@ -261,8 +261,12 @@ export const createSignalSchema = signalSchema.pick({
     signal_metadata: z.record(z.string(), z.unknown()).optional(),
     signal_payload: z.record(z.string(), z.unknown()).optional(),
     signal_tags: z.array(z.string()).optional(),
-    stamp_created: z.coerce.date().optional(),
-    stamp_imported: z.coerce.date().optional(),
+    stamp_created: z.string().nullable().optional().transform(val =>
+        val ? new Date(val) : undefined
+    ),
+    stamp_imported: z.string().nullable().optional().transform(val =>
+        val ? new Date(val) : undefined
+    ),
 })
 
 export const updateSignalSchema = z.object({
