@@ -13,7 +13,7 @@ interface Video {
 }
 
 export function VideoCarousel({ videos }: { videos: Video[] }) {
-    const [current, setCurrent] = useState(0)
+    const [current, setCurrent] = useState(videos.length - 1)
 
     const next = () => setCurrent((current + 1) % videos.length)
     const prev = () => setCurrent((current - 1 + videos.length) % videos.length)

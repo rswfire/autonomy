@@ -1,4 +1,4 @@
-# @rswfire/builtwithautonomy.com
+# @rswfire/autonomy
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.0-blue)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-orange)](https://www.typescriptlang.org)
@@ -223,3 +223,4 @@ Autonomy refuses to commit the sin of reframing someone's reality without consen
 ---
 
 > [Readme](/docs/readme.md) | [Roadmap](/docs/roadmap.md) | [Setup](/docs/setup.md) | [Myth](/docs/myth.md)
+``
