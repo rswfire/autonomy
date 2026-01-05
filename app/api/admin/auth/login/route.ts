@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
         const response = NextResponse.json({
             success: true,
-            token: token  // Add this
+            token: token
         })
 
         response.cookies.set('auth_token', token, {
