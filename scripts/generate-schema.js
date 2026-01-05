@@ -40,7 +40,7 @@ model Realm {
   realm_name        String   @db.VarChar(100)
   realm_slug        String   @unique @db.VarChar(100)
   realm_description String?  @db.Text
-  realm_settings    Json?    @db.JsonB  // or @db.Json for MySQL
+  realm_settings    Json?    ${isPostgres ? '@db.JsonB' : '@db.Json'}
 
   user_id           String   @db.VarChar(26)
   creator           User     @relation("RealmCreator", fields: [user_id], references: [user_id])
