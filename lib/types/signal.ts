@@ -88,7 +88,7 @@ export type TransmissionPayload = {
     mime_type?: string
 }
 
-type TransmissionMetadata = {
+export type TransmissionMetadata = {
     source_type?: 'local' | 'youtube' | 'vimeo' | 'podcast'
     source_url?: string
 
