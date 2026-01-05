@@ -87,7 +87,7 @@ export function SiteNavigation({ onClose }: { onClose?: () => void }) {
     const adminSection: NavSection = {
         title: 'Admin',
         items: [
-            { name: 'Realms', href: '/admin/realms', icon: 'SquareUserRound' },
+            { name: 'Realms', href: '/admin/realms', icon: 'SquareLibrary' },
             { name: 'Signals', href: '/admin/signals', icon: 'SquareActivity' },
             { name: 'Clusters', href: '/admin/clusters', icon: 'SquareCode' },
             { name: 'Synthesis', href: '/admin/synthesis', icon: 'SquareAsterisk' },

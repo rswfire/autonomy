@@ -13,7 +13,7 @@ import type {
     SignalFilter,
 } from '../validation/signal'
 import { isPostgres } from '../types'
-import { ulid } from '../utils/ulid'
+import {ulid, ulidFromDate} from '../utils/ulid'
 import { getUserRealmIds } from './realm'
 
 /**
@@ -43,6 +43,7 @@ export async function createSignal(
         signal_metadata,
         signal_payload,
         signal_tags,
+        stamp_created,
         stamp_imported,
         ...rest
     } = data
@@ -71,13 +72,14 @@ export async function createSignal(
 
     return await prisma.signal.create({
         data: {
-            signal_id: ulid(),
+            signal_id: stamp_created ? ulidFromDate(stamp_created) : ulid(),
             ...rest,
             ...geoData,
             ...(signal_metadata && { signal_metadata: signal_metadata as Prisma.InputJsonValue }),
             ...(signal_payload && { signal_payload: signal_payload as Prisma.InputJsonValue }),
             ...(signal_tags && { signal_tags: signal_tags as Prisma.InputJsonValue }),
             signal_history,
+            ...(stamp_created && { stamp_created }),  // Add this line
             ...(stamp_imported && { stamp_imported }),
         },
     })
@@ -570,6 +572,76 @@ export async function getSignalComplete(
         where: {
             signal_id,
             realm_id: { in: userRealmIds },
+        },
+        include: {
+            synthesis: true,
+            clusters: {
+                include: {
+                    cluster: true,
+                },
+            },
+        },
+    })
+}
+
+/**
+ * Get signals by realm slug
+ */
+export async function getSignalsByRealmSlug(
+    realmSlug: string,
+    filters?: {
+        signal_type?: string
+        signal_visibility?: string
+        limit?: number
+        offset?: number
+    }
+): Promise<{ signals: Signal[], total: number }> {
+    const realm = await prisma.realm.findUnique({
+        where: { realm_slug: realmSlug },
+    })
+
+    if (!realm) {
+        return { signals: [], total: 0 }
+    }
+
+    const where = {
+        realm_id: realm.realm_id,
+        ...(filters?.signal_type && { signal_type: filters.signal_type }),
+        ...(filters?.signal_visibility && { signal_visibility: filters.signal_visibility }),
+    }
+
+    const [signals, total] = await Promise.all([
+        prisma.signal.findMany({
+            where,
+            orderBy: { stamp_created: 'desc' },
+            take: filters?.limit || 50,
+            skip: filters?.offset || 0,
+        }),
+        prisma.signal.count({ where }),
+    ])
+
+    return { signals, total }
+}
+
+/**
+ * Get signal by ID and realm slug
+ */
+export async function getSignalByIdAndRealmSlug(
+    signalId: string,
+    realmSlug: string
+): Promise<SignalComplete | null> {
+    const realm = await prisma.realm.findUnique({
+        where: { realm_slug: realmSlug },
+    })
+
+    if (!realm) {
+        return null
+    }
+
+    return await prisma.signal.findFirst({
+        where: {
+            signal_id: signalId,
+            realm_id: realm.realm_id,
         },
         include: {
             synthesis: true,
