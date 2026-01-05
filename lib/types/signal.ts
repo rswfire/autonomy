@@ -82,9 +82,14 @@ export type PhotoMetadata = {
     mime_type?: string
 }
 
-export type TransmissionPayload = {
-    file_path: string
+export interface TransmissionPayload {
+    file_path?: string
     transcript?: string
+    timed_transcript?: Array<{
+        start: number
+        end: number
+        text: string
+    }>
     mime_type?: string
 }
 
