@@ -51,7 +51,7 @@ export default function HomePage() {
                         rel="noopener noreferrer"
                         className="flex flex-col items-start bg-white p-6 rounded-lg border hover:shadow-md transition"
                     >
-                        <Icon name="Github" size={24} className="text-gray-800 mb-3" />
+                        <Icon name="Computer" size={24} className="text-gray-800 mb-3" />
                         <h3 className="text-lg font-semibold text-gray-900 mb-1">Clone the Core</h3>
                         <p className="text-gray-600 text-sm">Full source code. No distortion. Yours to fork, run, and extend.</p>
                     </a>
