@@ -35,12 +35,14 @@ export async function getOrCreateDefaultRealm(userId: string): Promise<Realm> {
     })
 
     if (!realm) {
+        const id = ulid()
         realm = await prisma.realm.create({
             data: {
-                realm_id: ulid(),
+                realm_id: id,
                 user_id: userId,
                 realm_type: 'PRIVATE',
                 realm_name: 'My Realm',
+                realm_slug: id.toLowerCase(),
                 flag_registry: false,
             },
         })
@@ -56,6 +58,7 @@ export async function createRealm(
     userId: string,
     data: {
         realm_name: string
+        realm_slug: string
         realm_description?: string
         realm_type: string
         flag_registry?: boolean
@@ -73,9 +76,19 @@ export async function createRealm(
 /**
  * Update realm
  */
+/**
+ * Update realm
+ */
 export async function updateRealm(
     realmId: string,
-    data: Partial<Realm>
+    data: {
+        realm_name?: string
+        realm_slug?: string
+        realm_description?: string | null
+        realm_type?: string
+        realm_settings?: any
+        flag_registry?: boolean
+    }
 ): Promise<Realm> {
     return await prisma.realm.update({
         where: { realm_id: realmId },
@@ -125,4 +138,13 @@ export async function getUserRealmIds(userId: string): Promise<string[]> {
         select: { realm_id: true },
     })
     return realms.map((r: { realm_id: string }) => r.realm_id)
+}
+
+/**
+ * Get realm by ID
+ */
+export async function getRealmById(realmId: string): Promise<Realm | null> {
+    return await prisma.realm.findUnique({
+        where: { realm_id: realmId },
+    })
 }

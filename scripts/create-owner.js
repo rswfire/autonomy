@@ -22,6 +22,11 @@ async function validateEmail(email) {
     return emailRegex.test(email)
 }
 
+async function validateSlug(slug) {
+    const slugRegex = /^[a-z0-9-]+$/
+    return slugRegex.test(slug)
+}
+
 async function validatePassword(password) {
     const errors = []
 
@@ -99,6 +104,28 @@ async function createOwner() {
         // Get name (optional)
         const name = await question('Name (optional): ')
 
+        // Get realm slug
+        let slug = ''
+        let slugValid = false
+        while (!slugValid) {
+            slug = await question('Realm slug (lowercase, alphanumeric, hyphens only): ')
+            slugValid = await validateSlug(slug)
+            if (!slugValid) {
+                console.log('❌ Invalid slug format. Must be lowercase alphanumeric with hyphens only.\n')
+                continue
+            }
+
+            // Check if slug already exists
+            const existingRealm = await prisma.realm.findUnique({
+                where: { realm_slug: slug },
+            })
+
+            if (existingRealm) {
+                console.log('❌ A realm with this slug already exists.\n')
+                slugValid = false
+            }
+        }
+
         // Get password with warning
         console.log('\n⚠️  WARNING: Password will be visible on screen')
         console.log('Make sure no one is looking over your shoulder\n')
@@ -149,8 +176,18 @@ async function createOwner() {
                     realm_id: ulid(),
                     user_id: user.user_id,
                     realm_type: 'PRIVATE',
-                    realm_name: 'My Realm',
+                    realm_name: name ? `${name}'s Realm` : 'My Realm',
+                    realm_slug: slug,
                     flag_registry: false,
+                },
+            })
+
+            // Add user as realm member with OWNER role
+            await tx.realmUser.create({
+                data: {
+                    realm_id: realm.realm_id,
+                    user_id: user.user_id,
+                    user_role: 'OWNER',
                 },
             })
 
@@ -166,7 +203,9 @@ async function createOwner() {
         console.log('\n✅ Default realm created!\n')
         console.log(`Realm ID: ${result.realm.realm_id}`)
         console.log(`Realm Name: ${result.realm.realm_name}`)
+        console.log(`Realm Slug: ${result.realm.realm_slug}`)
         console.log(`Realm Type: ${result.realm.realm_type}`)
+        console.log(`Subdomain: ${result.realm.realm_slug}.autonomyrealms.com`)
         console.log('\n')
 
     } catch (error) {

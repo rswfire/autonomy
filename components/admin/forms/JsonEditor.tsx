@@ -36,7 +36,7 @@ export const JsonEditor = forwardRef<HTMLTextAreaElement, JsonEditorProps>(
             <div>
                 <Textarea
                     ref={ref}
-                    value={value}
+                    value={value || ''}
                     onChange={(e) => onChange?.(e.target.value)}
                     rows={rows}
                     placeholder={placeholder}

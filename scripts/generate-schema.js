@@ -36,9 +36,11 @@ datasource db {
 
 model Realm {
   realm_id          String   @id @db.VarChar(26)
-  realm_type        String   @default("PRIVATE") @db.VarChar(20)  // PRIVATE | PUBLIC | SHARED
+  realm_type        String   @default("PRIVATE") @db.VarChar(20)
   realm_name        String   @db.VarChar(100)
+  realm_slug        String   @unique @db.VarChar(100)
   realm_description String?  @db.Text
+  realm_settings    Json?    @db.JsonB  // or @db.Json for MySQL
 
   user_id           String   @db.VarChar(26)
   creator           User     @relation("RealmCreator", fields: [user_id], references: [user_id])
@@ -55,9 +57,11 @@ model Realm {
 
   @@map("realms")
   @@index([realm_type], map: "idx_realm_realm-type")
+  @@index([realm_slug], map: "idx_realm_realm-slug")
   @@index([user_id], map: "idx_realm_user-id")
   @@index([flag_registry], map: "idx_realm_flag-registry")
   @@index([stamp_created], map: "idx_realm_stamp-created")
+
 }
 
 model RealmUser {
@@ -289,7 +293,7 @@ if (!fs.existsSync(prismaDir)) {
     fs.mkdirSync(prismaDir, { recursive: true });
 }
 
-fs.writeFileSync("prisma/schema.prisma", baseSchema);
+fs.writeFileSync("prisma/schema.prisma", baseSchema, { flag: 'w' });
 console.log(`Generated schema for ${isPostgres ? "PostgreSQL" : "MySQL or compatible database"}.`);
 
 if (isPostgres) {

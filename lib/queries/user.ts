@@ -25,12 +25,14 @@ export async function createUser(data: CreateUserInput): Promise<User> {
         })
 
         // Create default private realm for new user
+        const realmId = ulid()
         await tx.realm.create({
             data: {
-                realm_id: ulid(),
+                realm_id: realmId,
                 user_id: user.user_id,
                 realm_type: 'PRIVATE',
                 realm_name: 'My Realm',
+                realm_slug: realmId.toLowerCase(),
                 flag_registry: false,
             },
         })
