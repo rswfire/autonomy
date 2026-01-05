@@ -52,6 +52,14 @@ function flattenPayloadFields(values: any) {
         payload_timed_transcript: payload.timed_transcript
             ? JSON.stringify(payload.timed_transcript, null, 2)
             : '',
+
+        // DOCUMENT fields
+        payload_content: payload.content || '',
+        payload_format: payload.format || 'plain',
+
+        // PHOTO fields
+        payload_thumbnail_path: payload.thumbnail_path || '',
+        payload_original_filename: payload.original_filename || '',
     }
 }
 
@@ -85,6 +93,28 @@ function flattenMetadataFields(values: any) {
         metadata_timestamps: metadata.timestamps
             ? JSON.stringify(metadata.timestamps, null, 2)
             : '',
+
+        // DOCUMENT fields
+        metadata_word_count: metadata.word_count || '',
+        metadata_character_count: metadata.character_count || '',
+        metadata_language: metadata.language || '',
+        metadata_file_extension: metadata.file_extension || '',
+        metadata_encoding: metadata.encoding || '',
+        metadata_mime_type: metadata.mime_type || '',
+
+        // PHOTO fields
+        metadata_camera: metadata.camera || '',
+        metadata_lens: metadata.lens || '',
+        metadata_iso: metadata.iso || '',
+        metadata_aperture: metadata.aperture || '',
+        metadata_shutter_speed: metadata.shutter_speed || '',
+        metadata_focal_length: metadata.focal_length || '',
+        metadata_width: metadata.width || '',
+        metadata_height: metadata.height || '',
+        metadata_file_size: metadata.file_size || '',
+        metadata_color_space: metadata.color_space || '',
+        metadata_timestamp_original: metadata.timestamp_original || '',
+        metadata_gps_altitude: metadata.gps_altitude || '',
     }
 }
 
