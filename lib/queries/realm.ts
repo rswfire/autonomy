@@ -148,3 +148,12 @@ export async function getRealmById(realmId: string): Promise<Realm | null> {
         where: { realm_id: realmId },
     })
 }
+
+/**
+ * Get realm by Slug
+ */
+export async function getRealmBySlug(slug: string): Promise<Realm | null> {
+    return await prisma.realm.findUnique({
+        where: { realm_slug: slug },
+    })
+}
