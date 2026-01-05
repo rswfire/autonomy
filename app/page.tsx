@@ -23,24 +23,34 @@ export default function HomePage() {
         <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
             <div className="max-w-6xl mx-auto px-4 py-20 sm:px-6 lg:px-8">
                 {/* Hero */}
-                <div className="text-center mb-16">
-                    <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 mb-6">
-                        Your documentation disappears into platforms you don't control
+                <div className="mb-16">
+                    <h1 className="text-6xl font-extrabold tracking-tight text-gray-900 mb-6">
+                        Your life isn't lost &mdash; it's just scattered and rewritten by platforms you don't control.
                     </h1>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                        Every photo, note, and conversation fragments across proprietary systems. Platform algorithms decide what matters. AI tools reframe your reality instead of reflecting it. You lose access when policies change or services shut down.
+                    <p className="text-xl text-gray-600 max-w-5xl leading-relaxed">
+                        Every photo you take. Every message you send. Every idea you share. Fragmented across apps,
+                        stored in walled gardens, stripped of context, sold to the highest bidder. Your data becomes
+                        their profit. Your patterns become their product. Your truth gets curated into something
+                        more... flattened.
                     </p>
                 </div>
 
                 {/* What Autonomy Does */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-16">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Autonomy preserves what platforms destroy</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                        Autonomy captures your lived experience &mdash; and keeps it yours.
+                    </h2>
                     <div className="space-y-4 text-lg text-gray-700">
                         <p>
-                            <strong>Open-source infrastructure for documenting lived experience.</strong> Capture signals (photos, documents, videos, conversations), extract metadata automatically, detect patterns across time and space, reflect with AI that doesn't reframe your reality.
+                            <strong>Autonomy is open-source infrastructure for personal signal preservation and
+                                reflection.</strong> Every photo, document, conversation, or video becomes a signal &mdash;
+                            timestamped, geolocated, embedded with metadata. The system detects patterns and synthesizes
+                            meaning without distortion.
                         </p>
                         <p>
-                            You host it. You own the data. No platform intermediaries. No algorithmic curation. No interpretive distortion.
+                            You own the system. You own the data. No black-box algorithms. No third-party gatekeepers.
+                            No therapeutic reframing of your experience. Just the raw, structured truth &mdash; visible to
+                            you, and only you, unless you decide otherwise.
                         </p>
                     </div>
                 </div>
@@ -50,10 +60,16 @@ export default function HomePage() {
 
                 {/* Proof */}
                 <div className="mt-16 bg-gradient-to-br from-teal-50 to-teal-100 border border-teal-200 rounded-xl p-8 mb-16">
-                    <h2 className="text-2xl font-bold text-teal-900 mb-3">This isn't theory. It's operational.</h2>
+                    <h2 className="text-2xl font-bold text-teal-900 mb-3">
+                        This isn't theory. It's operational.
+                    </h2>
                     <p className="text-teal-800 text-lg mb-6">
-                        Autonomy has processed <strong>800+ video transmissions</strong> with complete metadata extraction and AI reflection. Over <strong>8,000 signals</strong> documented across multiple realms. Running in production for 2+ years.
+                        Autonomy has processed over <strong>800 longform video signals</strong> with full metadata
+                        extraction and AI synthesis. <strong>Thousands of signals</strong> &mdash; documents, conversations,
+                        images, routes &mdash; across active realms. Production-grade, running for 2+ years. This is a
+                        working system, not a whitepaper.
                     </p>
+
 
                     <a href="https://rswfire.autonomyrealms.com"
                     target="_blank"
@@ -80,36 +96,40 @@ export default function HomePage() {
                         <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
                             <span className="text-2xl font-bold text-teal-600">1</span>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Capture Signals</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Capture Everything</h3>
                         <p className="text-gray-600 text-sm">
-                            Upload photos, documents, videos, or paste conversations. Each becomes an atomic signal with timestamps and location data.
+                            Photos from your phone. Videos you publish. Documents you write. Conversations you have.
+                            Maps of where you've been. All of it becomes signals with timestamps and locations.
                         </p>
                     </div>
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
                             <span className="text-2xl font-bold text-teal-600">2</span>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Extract Metadata</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Extract Structure</h3>
                         <p className="text-gray-600 text-sm">
-                            AI processing extracts structure: topics, entities, timestamps, locations. No manual tagging required.
+                            AI processing pulls out topics, people, places, timestamps. The structure of your life
+                            becomes queryable without manual tagging.
                         </p>
                     </div>
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
                             <span className="text-2xl font-bold text-teal-600">3</span>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Detect Patterns</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Find Patterns</h3>
                         <p className="text-gray-600 text-sm">
-                            System identifies clusters across time, space, and themes. Patterns emerge from signal streams.
+                            System clusters signals across time, geography, and themes. Recurring patterns emerge.
+                            You see what actually happened, not what an algorithm wants you to remember.
                         </p>
                     </div>
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
                             <span className="text-2xl font-bold text-teal-600">4</span>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Reflection</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Reflect Without Reframing</h3>
                         <p className="text-gray-600 text-sm">
-                            Generate synthesis that mirrors your reality without interpretive reframing. Truth preserved, not managed.
+                            AI synthesis mirrors reality. No therapeutic language. No reinterpretation. Just
+                            high-fidelity reflection of what's actually in your data.
                         </p>
                     </div>
                 </div>
@@ -132,7 +152,7 @@ export default function HomePage() {
                         </p>
                     </Link>
 
-                    <a href="https://autonomyrealms.com"
+                <a href="https://autonomyrealms.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex flex-col bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition group"
@@ -142,7 +162,8 @@ export default function HomePage() {
                         Claim Your Realm
                     </h3>
                     <p className="text-gray-600">
-                        Get your own subdomain at autonomyrealms.com. Hosted infrastructure, full sovereignty.
+                        Get your own subdomain at autonomyrealms.com. Hosted infrastructure, full sovereignty
+                        over your data.
                     </p>
                 </a>
                 <Link
@@ -164,8 +185,10 @@ export default function HomePage() {
     <div className="bg-gray-900 text-white rounded-xl p-8 text-center">
         <h2 className="text-2xl font-bold mb-3">Fully open source. MIT licensed.</h2>
         <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-            Clone it, fork it, modify it, deploy it. The code is yours. No gatekeeping, no vendor lock-in, no proprietary APIs.
+            Clone it, fork it, modify it, deploy it. The code is yours. No gatekeeping, no vendor lock-in,
+            no proprietary APIs.
         </p>
+
 
         <a href="https://github.com/rswfire/autonomy"
         target="_blank"
