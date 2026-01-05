@@ -110,3 +110,19 @@ export async function userHasRealmAccess(
     })
     return !!realm
 }
+
+/**
+ * Get user's accessible realm IDs
+ */
+export async function getUserRealmIds(userId: string): Promise<string[]> {
+    const realms = await prisma.realm.findMany({
+        where: {
+            OR: [
+                { user_id: userId },
+                { members: { some: { user_id: userId } } },
+            ],
+        },
+        select: { realm_id: true },
+    })
+    return realms.map((r: { realm_id: string }) => r.realm_id)
+}

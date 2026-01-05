@@ -15,22 +15,7 @@ import type {
     SynthesisFilter,
 } from '../validation/synthesis'
 import { ulid } from '../utils/ulid'
-
-/**
- * Get user's accessible realm IDs
- */
-async function getUserRealmIds(userId: string): Promise<string[]> {
-    const realms = await prisma.realm.findMany({
-        where: {
-            OR: [
-                { user_id: userId },
-                { members: { some: { user_id: userId } } },
-            ],
-        },
-        select: { realm_id: true },
-    })
-    return realms.map(r => r.realm_id)
-}
+import { getUserRealmIds } from './realm'
 
 /**
  * Create a new synthesis

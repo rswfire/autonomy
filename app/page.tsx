@@ -35,6 +35,27 @@ export default function HomePage() {
 
                 <VideoCarousel videos={autonomyVideos} />
 
+                <div className="mt-16 p-6 bg-teal-50 border border-teal-200 rounded-lg">
+                    <h2 className="text-2xl font-bold text-teal-900 mb-3">
+                        Autonomy Realms
+                    </h2>
+                    <p className="text-teal-800 mb-4">
+                        Multi-tenant service layer for Autonomy. Each realm is a sovereign territory
+                        for signal documentation and synthesis with subdomain-based access.
+                    </p>
+                    <a
+                        href="https://autonomyrealms.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition"
+                    >
+                        Visit Autonomy Realms
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                    </a>
+                </div>
+
                 {/* Philosophy */}
                 <div className="mt-12 max-w-3xl mx-auto mb-16">
                     <div className="bg-white rounded-lg shadow-md p-8">
