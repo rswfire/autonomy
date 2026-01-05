@@ -13,6 +13,7 @@ git fetch origin "$BRANCH"
 git reset --hard "origin/$BRANCH"
 rm -rf node_modules .next
 npm ci
+npx prisma generate
 npm run build
 
 if [ ! -d ".next" ]; then
