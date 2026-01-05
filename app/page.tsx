@@ -1,8 +1,8 @@
-// app/page.tsx (updated with Anchor component)
-import Link from 'next/link'
+// app/page.tsx
+import {Anchor} from '@/components/Anchor'
 import Icon from '@/components/Icon'
-import { VideoCarousel } from '@/components/VideoCarousel'
-import { Anchor } from '@/components/Anchor'
+import {VideoCarousel} from '@/components/VideoCarousel'
+import Link from 'next/link'
 
 const autonomyVideos = [
     {
@@ -40,7 +40,7 @@ export default function HomePage() {
                 </h2>
                 <div className="space-y-4 text-lg text-gray-700">
                     <p className="max-w-5xl mx-auto text-lg text-gray-700 leading-relaxed">
-                        <strong>Autonomy captures the raw material of your life — photos, documents, audio, video — and organizes it into signals: contextual, structured fragments of your reality that remain yours, not the platform’s.</strong></p>
+                        <strong>Autonomy captures the raw material of your life &mdash; photos, documents, audio, video &mdash; and organizes it into signals: contextual, structured fragments of your reality that remain yours, not the platform’s.</strong></p>
                     <p className="max-w-5xl mx-auto text-lg text-gray-700 leading-relaxed">Every photo, document, conversation, or video becomes a signal &mdash;
                         timestamped, geolocated, embedded with metadata. The system detects patterns and
                         synthesizes meaning without distortion.
@@ -70,20 +70,20 @@ export default function HomePage() {
                 </p>
 
                 <div className="max-w-4xl mx-auto ">
-                <Anchor
-                    href="https://rswfire.autonomyrealms.com"
-                    className="inline-flex items-center px-6 py-3 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition"
-                >
-                    View Live Example: rswfire.autonomyrealms.com
-                    <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                    </svg>
-                </Anchor>
+                    <Anchor
+                        href="https://rswfire.autonomyrealms.com"
+                        className="inline-flex items-center px-6 py-3 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition"
+                    >
+                        View Live Example: rswfire.autonomyrealms.com
+                        <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                        </svg>
+                    </Anchor>
                 </div>
             </div>
 
