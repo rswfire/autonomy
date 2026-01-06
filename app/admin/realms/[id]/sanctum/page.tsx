@@ -24,16 +24,16 @@ export default async function RealmSanctumPage({ params }: { params: Promise<{ i
     }
 
     const settings = realm.realm_settings as any || {}
-    const sanctumSettings = settings.sanctum || {
-        enabled: false,
-        display_name: 'Sanctum',
+    const sanctumSettings = {
+        enabled: settings.sanctum?.enabled || false,
+        display_name: settings.sanctum?.display_name || 'Sanctum',
         stripe: {
-            account_id: null,
-            onboarding_complete: false,
-            charges_enabled: false,
-            payouts_enabled: false,
+            account_id: settings.sanctum?.stripe?.account_id || null,
+            onboarding_complete: settings.sanctum?.stripe?.onboarding_complete || false,
+            charges_enabled: settings.sanctum?.stripe?.charges_enabled || false,
+            payouts_enabled: settings.sanctum?.stripe?.payouts_enabled || false,
         },
-        tiers: [],
+        tiers: settings.sanctum?.tiers || [],
     }
 
     // Get subscription stats - handle empty result
