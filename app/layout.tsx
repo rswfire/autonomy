@@ -2,6 +2,7 @@
 import type { Metadata } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+import Script from "next/script";
 import { Toaster } from 'sonner'
 import { SiteHeader } from '@/components/SiteHeader'
 import Link from 'next/link'
@@ -22,6 +23,16 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
+        <head>
+            {process.env.NODE_ENV === "production" && (
+                <Script
+                    src="https://analytics.rswfire.online/script.js"
+                    data-website-id="7ef56f74-a7a3-46ac-8a02-c5710fa1fc69"
+                    strategy="afterInteractive"
+                />
+            )}
+        </head>
+
         <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased flex min-h-screen flex-col`}>
         <Toaster position="top-right" />
 
