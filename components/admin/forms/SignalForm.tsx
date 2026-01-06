@@ -14,8 +14,10 @@ import {ConversationFields} from './signal/ConversationFields'
 import {DocumentFields} from './signal/DocumentFields'
 import {PhotoFields} from './signal/PhotoFields'
 import {TransmissionFields} from './signal/TransmissionFields'
+import {AnalysisFields} from './signal/AnalysisFields'
 import {
     buildSignalPayload,
+    buildAnalysisFields,
     cleanFormData,
     buildCoordinates,
     buildAnnotations
@@ -71,10 +73,16 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms 
             // Build type-specific payload and metadata
             const { payload, metadata } = buildSignalPayload(signalType, data)
 
+            // Build analysis fields
+            const analysisFields = buildAnalysisFields(data)
+
             // Clean form data and build final payload
             let processedData = cleanFormData(data)
             processedData.signal_payload = payload
             processedData.signal_metadata = metadata
+
+            // Add analysis fields
+            Object.assign(processedData, analysisFields)
 
             // Preserve legacy metadata if editing
             if (mode === 'edit' && defaultValues?.signal_metadata?.legacy) {
@@ -210,11 +218,11 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms 
                         />
                     </FormField>
 
-                    <FormField label="Description" name="signal_description">
+                    <FormField label="Summary" name="signal_summary">
                         <Textarea
-                            {...register('signal_description')}
+                            {...register('signal_summary')}
                             rows={4}
-                            placeholder="Enter description"
+                            placeholder="Enter summary"
                         />
                     </FormField>
 
@@ -330,6 +338,13 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms 
                     {!signalType && (
                         <p className="text-gray-500 italic">Select a signal type to configure data fields</p>
                     )}
+                </FormSection>
+
+                <FormSection
+                    title="Analysis"
+                    description="Surface and structural signal data"
+                >
+                    <AnalysisFields register={register} />
                 </FormSection>
 
                 <FormSection

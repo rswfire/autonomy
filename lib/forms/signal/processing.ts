@@ -15,6 +15,36 @@ export function buildSignalPayload(signalType: string, data: any) {
     }
 }
 
+export function buildAnalysisFields(data: any) {
+    return {
+        signal_actions: splitCommaSeparated(data.signal_actions),
+        signal_environment: data.signal_environment || null,
+        signal_entities: {
+            people: splitCommaSeparated(data.signal_entities_people),
+            animals: splitCommaSeparated(data.signal_entities_animals),
+            places: splitCommaSeparated(data.signal_entities_places),
+            infrastructure: splitCommaSeparated(data.signal_entities_infrastructure),
+            organizations: splitCommaSeparated(data.signal_entities_organizations),
+            concepts: splitCommaSeparated(data.signal_entities_concepts),
+            media: splitCommaSeparated(data.signal_entities_media),
+        },
+        signal_density: data.signal_density ? parseFloat(data.signal_density) : null,
+        signal_energy: data.signal_energy || null,
+        signal_state: data.signal_state || null,
+        signal_orientation: data.signal_orientation || null,
+        signal_substrate: data.signal_substrate || null,
+        signal_ontological_states: splitCommaSeparated(data.signal_ontological_states),
+        signal_symbolic_elements: splitCommaSeparated(data.signal_symbolic_elements),
+        signal_subsystems: splitCommaSeparated(data.signal_subsystems),
+        signal_dominant_language: splitCommaSeparated(data.signal_dominant_language),
+    }
+}
+
+function splitCommaSeparated(value: string | null | undefined): string[] | null {
+    if (!value?.trim()) return null
+    return value.split(',').map(s => s.trim()).filter(Boolean)
+}
+
 function buildDocumentData(data: any) {
     return {
         payload: {
@@ -163,7 +193,15 @@ export function cleanFormData(data: any) {
 
     // Remove temporary form fields
     Object.keys(cleaned).forEach(key => {
-        if (key.startsWith('payload_') || key.startsWith('metadata_')) {
+        if (key.startsWith('payload_') ||
+            key.startsWith('metadata_') ||
+            key.startsWith('signal_entities_') ||
+            key === 'signal_actions' ||
+            key === 'signal_environment' ||
+            key === 'signal_ontological_states' ||
+            key === 'signal_symbolic_elements' ||
+            key === 'signal_subsystems' ||
+            key === 'signal_dominant_language') {
             delete cleaned[key]
         }
     })

@@ -25,6 +25,7 @@ function getEditDefaults(values: any) {
     return {
         ...values,
         signal_tags: parseTagsField(values.signal_tags),
+        ...flattenAnalysisFields(values),
         ...flattenPayloadFields(values),
         ...flattenMetadataFields(values),
     }
@@ -40,6 +41,32 @@ function parseTagsField(tags: any): string[] {
         }
     }
     return []
+}
+
+function flattenAnalysisFields(values: any) {
+    return {
+        // Surface layer
+        signal_actions: values.signal_actions ? values.signal_actions.join(', ') : '',
+        signal_environment: values.signal_environment || '',
+        signal_entities_people: values.signal_entities?.people?.join(', ') || '',
+        signal_entities_animals: values.signal_entities?.animals?.join(', ') || '',
+        signal_entities_places: values.signal_entities?.places?.join(', ') || '',
+        signal_entities_infrastructure: values.signal_entities?.infrastructure?.join(', ') || '',
+        signal_entities_organizations: values.signal_entities?.organizations?.join(', ') || '',
+        signal_entities_concepts: values.signal_entities?.concepts?.join(', ') || '',
+        signal_entities_media: values.signal_entities?.media?.join(', ') || '',
+        signal_density: values.signal_density || '',
+
+        // Structural layer
+        signal_energy: values.signal_energy || '',
+        signal_state: values.signal_state || '',
+        signal_orientation: values.signal_orientation || '',
+        signal_substrate: values.signal_substrate || '',
+        signal_ontological_states: values.signal_ontological_states?.join(', ') || '',
+        signal_symbolic_elements: values.signal_symbolic_elements?.join(', ') || '',
+        signal_subsystems: values.signal_subsystems?.join(', ') || '',
+        signal_dominant_language: values.signal_dominant_language?.join(', ') || '',
+    }
 }
 
 function flattenPayloadFields(values: any) {
