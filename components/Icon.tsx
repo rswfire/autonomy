@@ -1,6 +1,7 @@
 // components/Icon.tsx
 import {
     BookOpen,
+    Bot,
     Castle,
     CheckCircle,
     ChevronLeft,
@@ -11,9 +12,12 @@ import {
     Database,
     Droplets,
     Edit,
+    Eye,
+    EyeOff,
     Flame,
     HelpCircle,
     Home,
+    Info,
     Landmark,
     Lightbulb,
     Loader2,
@@ -44,6 +48,7 @@ import {
 
 const iconMap = {
     BookOpen,
+    Bot,
     Castle,
     CheckCircle,
     ChevronLeft,
@@ -54,9 +59,12 @@ const iconMap = {
     Database,
     Droplets,
     Edit,
+    Eye,
+    EyeOff,
     Flame,
     HelpCircle,
     Home,
+    Info,
     Landmark,
     Loader2,
     Lightbulb,

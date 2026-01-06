@@ -64,6 +64,12 @@ export default async function RealmsPage() {
                             </div>
 
                             <div className="flex gap-2">
+                                <Link href={`/admin/realms/${realm.realm_id}/llm`}>
+                                    <Button variant="ghost" size="sm">
+                                        <Icon name="Bot" size={16} className="mr-2" />
+                                        LLM
+                                    </Button>
+                                </Link>
                                 <Link href={`/admin/realms/${realm.realm_id}/sanctum`}>
                                     <Button variant="ghost" size="sm">
                                         <Icon name="Sprout" size={16} className="mr-2" />
