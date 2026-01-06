@@ -38,7 +38,7 @@ export async function requireAuth(): Promise<AuthPayload> {
     const user = await getCurrentUser()
 
     if (!user) {
-        redirect('/admin/login')  // ← Redirect instead of throw
+        redirect('/admin/login')
     }
 
     return user
@@ -52,7 +52,7 @@ export async function requireAuthAPI(): Promise<AuthPayload> {
     const user = await getCurrentUser()
 
     if (!user) {
-        throw new Error('Not authenticated')  // ← API routes should throw
+        throw new Error('Not authenticated')
     }
 
     return user

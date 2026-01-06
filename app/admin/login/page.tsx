@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
                 throw new Error(errorData.error || 'Login failed')
             }
 
-            router.push('/admin/signals')
+            router.push('/admin/')
             router.refresh()
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred')
