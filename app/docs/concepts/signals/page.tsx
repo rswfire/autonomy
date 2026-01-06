@@ -69,7 +69,7 @@ export default function SignalsPage() {
             <section className="mb-12">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Signal Context (Intent)</h2>
                 <p className="text-gray-700 mb-6">
-                    Context describes <strong>why</strong> a signal was created. It's optional but provides valuable metadata for AI synthesis and pattern recognition.
+                    Context describes <strong>why</strong> a signal was created. It's optional but provides valuable metadata for synthesis and pattern recognition.
                 </p>
                 <div className="grid md:grid-cols-2 gap-4">
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
@@ -127,11 +127,11 @@ export default function SignalsPage() {
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_title</code>
-                            <span className="col-span-2 text-gray-700">Brief title (initially from synthesis)</span>
+                            <span className="col-span-2 text-gray-700">Brief title</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
-                            <code className="text-blue-600">signal_description</code>
-                            <span className="col-span-2 text-gray-700">Longer description (initially from synthesis)</span>
+                            <code className="text-blue-600">signal_summary</code>
+                            <span className="col-span-2 text-gray-700">Longer summary or description</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_author</code>
@@ -148,6 +148,65 @@ export default function SignalsPage() {
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_visibility</code>
                             <span className="col-span-2 text-gray-700">PUBLIC, PRIVATE, SANCTUM, or SHARED</span>
+                        </div>
+                    </div>
+
+                    <h3 className="font-semibold text-gray-900 mb-3 mt-6">Analysis Fields</h3>
+                    <p className="text-sm text-gray-600 mb-4">Surface and structural metadata extracted through analysis.</p>
+
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">Surface Layer</h4>
+                    <div className="space-y-3 text-sm mb-4">
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_actions</code>
+                            <span className="col-span-2 text-gray-700">Array of visible actions in the signal</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_environment</code>
+                            <span className="col-span-2 text-gray-700">Context at time of signal creation</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_entities</code>
+                            <span className="col-span-2 text-gray-700">Categorized entities: people, places, infrastructure, organizations, concepts, media</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_density</code>
+                            <span className="col-span-2 text-gray-700">Recursion/complexity metric (-1.0 to 1.0)</span>
+                        </div>
+                    </div>
+
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">Structural Layer</h4>
+                    <div className="space-y-3 text-sm">
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_energy</code>
+                            <span className="col-span-2 text-gray-700">Energetic state (e.g., methodical, resolute, exhausted)</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_state</code>
+                            <span className="col-span-2 text-gray-700">Life/project state (e.g., infrastructure-building, crisis, integration)</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_orientation</code>
+                            <span className="col-span-2 text-gray-700">Directional facing (e.g., toward sovereignty, toward extraction)</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_substrate</code>
+                            <span className="col-span-2 text-gray-700">Structural/conceptual foundation underlying the signal</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_ontological_states</code>
+                            <span className="col-span-2 text-gray-700">Array of being-states (e.g., sovereign, embedded, coherent)</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_symbolic_elements</code>
+                            <span className="col-span-2 text-gray-700">Array of recurring motifs/symbols (e.g., mirror, archive, trail)</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_subsystems</code>
+                            <span className="col-span-2 text-gray-700">Array of engaged subsystems (e.g., cognitive, infrastructural, relational)</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <code className="text-blue-600">signal_dominant_language</code>
+                            <span className="col-span-2 text-gray-700">Array of key semantic patterns shaping the signal</span>
                         </div>
                     </div>
 
@@ -302,7 +361,7 @@ export default function SignalsPage() {
                             <p className="text-sm font-semibold text-gray-700 mb-2">Payload:</p>
                             <ul className="text-sm text-gray-600 space-y-1">
                                 <li><code className="text-blue-600">messages</code> - Array of messages: {`[{role, content, timestamp, metadata}]`}</li>
-                                <li><code className="text-blue-600">summary</code> - AI-generated conversation summary</li>
+                                <li><code className="text-blue-600">summary</code> - Generated conversation summary</li>
                                 <li><code className="text-blue-600">key_points</code> - Array of extracted key insights</li>
                             </ul>
                         </div>
@@ -312,7 +371,7 @@ export default function SignalsPage() {
                     <div className="space-y-3 text-sm">
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_tags</code>
-                            <span className="col-span-2 text-gray-700">Array of tags (initially from synthesis)</span>
+                            <span className="col-span-2 text-gray-700">Array of tags for categorization</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_embedding</code>
@@ -324,7 +383,7 @@ export default function SignalsPage() {
                     <div className="space-y-3 text-sm">
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_history</code>
-                            <span className="col-span-2 text-gray-700">Audit trail: {`[{timestamp, action, field, user_id}]`}</span>
+                            <span className="col-span-2 text-gray-700">Audit trail: {`[{timestamp, fields_changed, previous_values, trigger, user_id}]`}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <code className="text-blue-600">signal_annotations</code>
@@ -368,6 +427,46 @@ export default function SignalsPage() {
                 </div>
             </section>
 
+            {/* Analysis Layers */}
+            <section className="mb-12">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Analysis Layers</h2>
+                <div className="prose prose-lg text-gray-700 space-y-4">
+                    <p>
+                        Signals capture two distinct layers of analysis: <strong>surface</strong> and <strong>structural</strong>.
+                    </p>
+
+                    <div className="bg-white border border-gray-200 rounded-lg p-6 mt-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Surface Layer</h3>
+                        <p className="text-gray-700 mb-3">
+                            Observable, concrete elements of the signal. What's directly visible.
+                        </p>
+                        <ul className="space-y-2 text-gray-700">
+                            <li><strong>Actions</strong> - What's happening in the signal</li>
+                            <li><strong>Environment</strong> - Context at time of creation</li>
+                            <li><strong>Entities</strong> - People, places, infrastructure, concepts mentioned</li>
+                            <li><strong>Density</strong> - Measure of recursion and conceptual complexity</li>
+                        </ul>
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-lg p-6 mt-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Structural Layer</h3>
+                        <p className="text-gray-700 mb-3">
+                            Underlying patterns, states, and orientations. What the signal <em>is</em>, not just what it contains.
+                        </p>
+                        <ul className="space-y-2 text-gray-700">
+                            <li><strong>Energy</strong> - Energetic state (methodical, resolute, exhausted)</li>
+                            <li><strong>State</strong> - Life/project state (infrastructure-building, crisis, integration)</li>
+                            <li><strong>Orientation</strong> - Directional facing (toward sovereignty, toward manifestation)</li>
+                            <li><strong>Substrate</strong> - Foundational structure underlying the signal</li>
+                            <li><strong>Ontological States</strong> - Being-states (sovereign, embedded, coherent)</li>
+                            <li><strong>Symbolic Elements</strong> - Recurring motifs and symbols (mirror, trail, extraction)</li>
+                            <li><strong>Subsystems</strong> - Which subsystems are engaged (cognitive, relational, infrastructural)</li>
+                            <li><strong>Dominant Language</strong> - Semantic field shaping the signal</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
             {/* Signal Lifecycle */}
             <section className="mb-12">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Signal Lifecycle</h2>
@@ -377,19 +476,16 @@ export default function SignalsPage() {
                             <strong>Capture</strong> — Signal is created with minimal data: type, context, raw payload
                         </li>
                         <li>
-                            <strong>Synthesis</strong> — AI processes signal and generates METADATA/SURFACE (title, description, tags)
-                        </li>
-                        <li>
-                            <strong>Enrichment</strong> — Title/description/tags copied to signal table for display
+                            <strong>Analysis</strong> — Surface and structural layers are extracted and stored
                         </li>
                         <li>
                             <strong>Clustering</strong> — Can be grouped with related signals in clusters
                         </li>
                         <li>
-                            <strong>Deep Synthesis</strong> — STRUCTURE, PATTERNS analysis for cross-signal insights
+                            <strong>Pattern Detection</strong> — Cross-signal analysis identifies longitudinal patterns
                         </li>
                         <li>
-                            <strong>Reflection</strong> — MIRROR, MYTH, NARRATIVE generation at cluster level
+                            <strong>Synthesis</strong> — Higher-order insights generated at cluster level
                         </li>
                     </ol>
                 </div>
@@ -402,7 +498,7 @@ export default function SignalsPage() {
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
                         <h3 className="font-semibold text-gray-900 mb-2">Signals are input for pattern recognition</h3>
                         <p className="text-gray-600">
-                            Not content for consumption. Raw documentation of lived reality that AI synthesis processes to identify patterns and generate insights.
+                            Not content for consumption. Raw documentation of lived reality that analysis processes to identify patterns and generate insights.
                         </p>
                     </div>
 
@@ -414,9 +510,9 @@ export default function SignalsPage() {
                     </div>
 
                     <div className="bg-white border border-gray-200 rounded-lg p-6">
-                        <h3 className="font-semibold text-gray-900 mb-2">Title/description/tags come from synthesis</h3>
+                        <h3 className="font-semibold text-gray-900 mb-2">Analysis data can be manually edited</h3>
                         <p className="text-gray-600">
-                            These display fields are initially AI-generated, then user-editable. Changes are tracked in signal_history.
+                            All analysis fields are editable. Changes are tracked in signal_history with trigger type (user_edit, re_synthesis, etc.).
                         </p>
                     </div>
 
@@ -445,7 +541,7 @@ export default function SignalsPage() {
 
                     <Link href="/docs/concepts/synthesis" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">🔮 Synthesis</h3>
-                        <p className="text-gray-600">AI-powered pattern detection and insight generation.</p>
+                        <p className="text-gray-600">Pattern detection and insight generation.</p>
                     </Link>
 
                     <Link href="/docs/getting-started" className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors">
