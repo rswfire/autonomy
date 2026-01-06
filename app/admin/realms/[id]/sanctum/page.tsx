@@ -6,6 +6,8 @@ import Link from "next/link";
 import { notFound, redirect } from 'next/navigation'
 import SanctumManager from '@/components/admin/SanctumManager'
 
+// app/admin/realms/[id]/sanctum/page.tsx
+
 export default async function RealmSanctumPage({ params }: { params: Promise<{ id: string }> }) {
     const user = await requireAuth()
     const { id } = await params
@@ -34,7 +36,7 @@ export default async function RealmSanctumPage({ params }: { params: Promise<{ i
         tiers: [],
     }
 
-    // Get subscription stats
+    // Get subscription stats - handle empty result
     const subscriptionStats = await prisma.realmUser.groupBy({
         by: ['sanctum_tier'],
         where: {
@@ -43,7 +45,7 @@ export default async function RealmSanctumPage({ params }: { params: Promise<{ i
             stripe_subscription_status: 'active',
         },
         _count: true,
-    })
+    }).catch(() => []) || []
 
     return (
         <div className="max-w-6xl mx-auto py-8 px-4">
