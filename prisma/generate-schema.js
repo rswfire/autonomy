@@ -65,20 +65,26 @@ model Realm {
 }
 
 model RealmUser {
-  realm_id      String   @db.VarChar(26)
-  user_id       String   @db.VarChar(26)
+  realm_id  String  @db.VarChar(26)
+  user_id   String  @db.VarChar(26)
 
-  realm         Realm    @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
-  user          User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  realm     Realm  @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
+  user      User   @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
-  user_role     String   @default("OBSERVER") @db.VarChar(20)  // OWNER | CONTRIBUTOR | OBSERVER
+  user_role                   String   @default("GUEST") @db.VarChar(20)  // OWNER | SANCTUM | GUEST
+  sanctum_tier                String?  @db.VarChar(255)
+  stripe_subscription_id      String?  @db.VarChar(255)
+  stripe_subscription_status  String?  @db.VarChar(50)
+
   stamp_joined  DateTime @default(now())
 
   @@id([realm_id, user_id])
   @@map("realms_users")
   @@index([realm_id], map: "idx_realmuser_realm-id")
   @@index([user_id], map: "idx_realmuser_user-id")
-  @@index([user_role], map: "idx_realmuser_member-role")
+  @@index([user_role], map: "idx_realmuser_user-role")
+  @@index([stripe_subscription_id], map: "idx_realmuser_stripe-subscription-id")
+  @@index([stripe_subscription_status], map: "idx_realmuser_stripe-subscription-status")
 }
 
 

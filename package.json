@@ -22,7 +22,7 @@
   "author": "Robert Samuel White <rsw@rswfire.com>",
   "scripts": {
     "create-owner": "node scripts/create-owner.js",
-    "db:generate-schema": "node scripts/generate-schema.js",
+    "db:generate-schema": "node prisma/generate-schema.js",
     "db:push": "npm run db:generate-schema && npx prisma db push",
     "db:generate": "npm run db:generate-schema && npx prisma generate",
     "dev": "next dev",
