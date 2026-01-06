@@ -28,6 +28,8 @@ export default async function RealmsPage() {
 
             <div className="grid gap-6">
                 {realms.map((realm) => (
+                    // app/admin/realms/page.tsx - Add Sanctum button to realm card
+
                     <div key={realm.realm_id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <div className="flex justify-between items-start">
                             <div className="flex-1">
@@ -36,12 +38,12 @@ export default async function RealmsPage() {
                                         {realm.realm_name}
                                     </h3>
                                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-teal-100 text-teal-800">
-                                        {realm.realm_type}
-                                    </span>
+                    {realm.realm_type}
+                </span>
                                     {realm.flag_registry && (
                                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                                            Public Registry
-                                        </span>
+                        Public Registry
+                    </span>
                                     )}
                                 </div>
 
@@ -61,12 +63,20 @@ export default async function RealmsPage() {
                                 </div>
                             </div>
 
-                            <Link href={`/admin/realms/${realm.realm_id}`}>
-                                <Button variant="ghost" size="sm">
-                                    <Icon name="Edit" size={16} className="mr-2" />
-                                    Edit
-                                </Button>
-                            </Link>
+                            <div className="flex gap-2">
+                                <Link href={`/admin/realms/${realm.realm_id}/sanctum`}>
+                                    <Button variant="ghost" size="sm">
+                                        <Icon name="Sprout" size={16} className="mr-2" />
+                                        Sanctum
+                                    </Button>
+                                </Link>
+                                <Link href={`/admin/realms/${realm.realm_id}`}>
+                                    <Button variant="ghost" size="sm">
+                                        <Icon name="Edit" size={16} className="mr-2" />
+                                        Edit
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 ))}
