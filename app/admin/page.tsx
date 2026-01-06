@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
         queryClusters({ limit: 1, offset: 0, sort_order: 'desc' }, user.user_id),
         querySynthesis({ limit: 1, offset: 0, sort_order: 'desc' }, user.user_id),
         listUsers({ limit: 1, offset: 0 }),
-        getUserRealms({ userId: user.user_id, limit: 1 }),
+        getUserRealms({ userId: user.user_id }),
     ])
 
     const stats = [
