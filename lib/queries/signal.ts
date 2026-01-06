@@ -322,7 +322,7 @@ export async function querySignals(
     if (search) {
         where.OR = [
             { signal_title: { contains: search, mode: 'insensitive' } },
-            { signal_description: { contains: search, mode: 'insensitive' } },
+            { signal_summary: { contains: search, mode: 'insensitive' } },
         ]
     }
 

@@ -99,20 +99,35 @@ model Signal {
   realm               Realm    @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
 
   signal_type         String   @db.VarChar(50)
-  signal_context      String?  @db.VarChar(50)
   signal_title        String   @db.VarChar(100)
-  signal_description  String?  @db.Text
+  signal_context      String?  @db.VarChar(50)
+  signal_summary      String?  @db.Text
   signal_author       String   @db.VarChar(50)
+  signal_tags         Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+
+  signal_environment  String?  @db.Text
   signal_temperature  Decimal? @default(0.0) @db.Decimal(3, 2)
+  signal_actions      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_entities     Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_density      Decimal? @db.Decimal(3, 2)
+
+  signal_energy       String?  @db.VarChar(100)
+  signal_state        String?  @db.VarChar(100)
+  signal_orientation  String?  @db.VarChar(100)
+  signal_substrate    String?  @db.Text
+  signal_ontological_states Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_symbolic_elements  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_subsystems         Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  signal_dominant_language  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
 
   ${isPostgres ? 'signal_location Unsupported("geography(Point, 4326)")? @map("signal_location")' : 'signal_latitude Decimal? @db.Decimal(10, 8)\n  signal_longitude Decimal? @db.Decimal(11, 8)'}
 
-  signal_status      String  @default("PENDING")
-  signal_visibility  String  @default("PUBLIC")
+  signal_status              String  @default("PENDING")
+  signal_visibility          String  @default("PUBLIC")
+  signal_visibility_sanctum  String?
 
   signal_metadata     Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
   signal_payload      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  signal_tags         Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
   signal_history      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
   signal_annotations  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
 
@@ -131,12 +146,17 @@ model Signal {
   @@map("signals")
   @@index([realm_id], map: "idx_signal_realm-id")
   @@index([signal_type], map: "idx_signal-type")
-  @@index([signal_context], map: "idx_signal-context")
   @@index([signal_title], map: "idx_signal-title")
   @@index([signal_author], map: "idx_signal-author")
+  @@index([signal_environment], map: "idx_signal-environment")
   @@index([signal_temperature], map: "idx_signal-temperature")
+  @@index([signal_density], map: "idx_signal-density")
+  @@index([signal_energy], map: "idx_signal-energy")
+  @@index([signal_state], map: "idx_signal-state")
+  @@index([signal_orientation], map: "idx_signal-orientation")
   @@index([signal_status], map: "idx_signal-status")
   @@index([signal_visibility], map: "idx_signal-visibility")
+  @@index([signal_visibility_sanctum], map: "idx_signal-visibility_sanctum")
   ${!isPostgres ? '@@index([signal_latitude], map: "idx_signal_signal-latitude")' : ''}
   ${!isPostgres ? '@@index([signal_longitude], map: "idx_signal_signal-longitude")' : ''}
   ${!isPostgres ? '@@index([signal_latitude, signal_longitude], map: "idx_signal_signal-latitude_signal_signal-longitude")' : ''}

@@ -1,20 +1,26 @@
 // lib/types/signal.ts
-import type { Signal, Synthesis, ClusterSignal, Cluster } from '@prisma/client'
+import type { Signal, Synthesis, ClusterSignal, Cluster } from "@prisma/client"
 
-// JSON field types
-export type SignalMetadata = Record<string, unknown>
-export type SignalPayload = Record<string, unknown>
-export type SignalTags = string[]
+// Relations
 
-export type SignalHistory = Array<{
-    timestamp: string
-    action: string  // 'created', 'edited_title', 'edited_tags', 'synthesis_processed', etc.
-    field?: string
-    previous_value?: unknown
-    new_value?: unknown
-    user_id?: string
-    synthesis_id?: string
-}>
+export type SignalComplete = Signal & {
+    synthesis: Synthesis[]
+    clusters: (ClusterSignal & {
+        cluster: Cluster
+    })[]
+}
+
+export type SignalWithClusters = Signal & {
+    clusters: (ClusterSignal & {
+        cluster: Cluster
+    })[]
+}
+
+export type SignalWithSynthesis = Signal & {
+    synthesis: Synthesis[]
+}
+
+// Definitions
 
 export type SignalAnnotations = {
     user_notes?: Array<{
@@ -31,28 +37,48 @@ export type SignalAnnotations = {
     }>
 }
 
-// Signal with relations
-export type SignalWithSynthesis = Signal & {
-    synthesis: Synthesis[]
+export type SignalEntities = {
+    people?: string[]
+    animals?: string[]
+    places?: string[]
+    infrastructure?: string[]
+    organizations?: string[]
+    concepts?: string[]
+    media?: string[]
 }
 
-export type SignalWithClusters = Signal & {
-    clusters: (ClusterSignal & {
-        cluster: Cluster
-    })[]
+export type SignalHistory = Array<{
+    timestamp: string
+    model?: string
+    fields_changed: string[]
+    previous_values: Record<string, unknown>
+    trigger: "creation" | "user_edit" | "user_annotation" | "re_synthesis" | "manual_override"
+    user_id?: string
+    synthesis_id?: string
+}>
+
+export type SignalMetadata = Record<string, unknown>
+
+export type SignalPayload = Record<string, unknown>
+
+export type SignalTags = string[]
+
+// JSON Fields
+
+export type ConversationMetadata = {
+    message_count?: number
+    duration_minutes?: number
+    model?: string
+    total_tokens?: number
 }
 
-export type SignalComplete = Signal & {
-    synthesis: Synthesis[]
-    clusters: (ClusterSignal & {
-        cluster: Cluster
-    })[]
-}
-
-// Type-specific payload schemas (used for validation)
-export type DocumentPayload = {
-    content: string
-    format?: 'plain' | 'markdown' | 'html'
+export type ConversationPayload = {
+    messages: Array<{
+        role: "user" | "assistant"
+        content: string
+        timestamp?: string
+    }>
+    platform?: "claude" | "chatgpt" | "other"
 }
 
 export type DocumentMetadata = {
@@ -63,10 +89,9 @@ export type DocumentMetadata = {
     encoding?: string
 }
 
-export type PhotoPayload = {
-    file_path: string
-    thumbnail_path?: string
-    original_filename?: string
+export type DocumentPayload = {
+    content: string
+    format?: "plain" | "markdown" | "html"
 }
 
 export type PhotoMetadata = {
@@ -82,22 +107,16 @@ export type PhotoMetadata = {
     mime_type?: string
 }
 
-export interface TransmissionPayload {
-    file_path?: string
-    transcript?: string
-    timed_transcript?: Array<{
-        start: number
-        end: number
-        text: string
-    }>
-    mime_type?: string
+export type PhotoPayload = {
+    file_path: string
+    thumbnail_path?: string
+    original_filename?: string
 }
 
 export type TransmissionMetadata = {
-    source_type?: 'local' | 'youtube' | 'vimeo' | 'podcast'
+    source_type?: "local" | "youtube" | "vimeo" | "podcast"
     source_url?: string
 
-    // Source-specific data (discriminated by source_type)
     youtube?: {
         id: string
         channel: string
@@ -121,7 +140,6 @@ export type TransmissionMetadata = {
         feed_url?: string
     }
 
-    // Technical metadata (applies to all)
     duration?: number
     bitrate?: number
     sample_rate?: number
@@ -130,22 +148,19 @@ export type TransmissionMetadata = {
     file_size?: number
     mime_type?: string
 
-    // Video-specific (when applicable)
     video?: {
         width: number
         height: number
         framerate: number
     }
 
-    // Transcription metadata
     transcript?: {
-        method: 'whisper' | 'manual' | 'youtube_auto' | 'imported'
+        method: "whisper" | "manual" | "youtube_auto" | "imported"
         language?: string
         confidence?: number
         processed_at?: string
     }
 
-    // Timestamps (chapters/markers)
     timestamps?: Array<{
         time: number  // seconds
         label: string
@@ -153,18 +168,13 @@ export type TransmissionMetadata = {
     }>
 }
 
-export type ConversationPayload = {
-    messages: Array<{
-        role: 'user' | 'assistant'
-        content: string
-        timestamp?: string
+export interface TransmissionPayload {
+    file_path?: string
+    transcript?: string
+    timed_transcript?: Array<{
+        start: number
+        end: number
+        text: string
     }>
-    platform?: 'claude' | 'chatgpt' | 'other'
-}
-
-export type ConversationMetadata = {
-    message_count?: number
-    duration_minutes?: number
-    model?: string
-    total_tokens?: number
+    mime_type?: string
 }

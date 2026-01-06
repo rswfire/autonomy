@@ -181,10 +181,10 @@ export const signalPayloadSchemas = {
 
 const signalHistorySchema = z.array(z.object({
     timestamp: z.string(),
-    action: z.string(),
-    field: z.string().optional(),
-    previous_value: z.unknown().optional(),
-    new_value: z.unknown().optional(),
+    model: z.string().optional(),
+    fields_changed: z.array(z.string()),
+    previous_values: z.record(z.string(), z.unknown()),
+    trigger: z.enum(['creation', 'user_edit', 'user_annotation', 're_synthesis', 'manual_override']),
     user_id: z.string().optional(),
     synthesis_id: z.string().optional(),
 }))
@@ -205,6 +205,20 @@ const signalAnnotationsSchema = z.object({
 })
 
 // ====================
+// ENTITIES SCHEMA
+// ====================
+
+const signalEntitiesSchema = z.object({
+    people: z.array(z.string()).optional(),
+    animals: z.array(z.string()).optional(),
+    places: z.array(z.string()).optional(),
+    infrastructure: z.array(z.string()).optional(),
+    organizations: z.array(z.string()).optional(),
+    concepts: z.array(z.string()).optional(),
+    media: z.array(z.string()).optional(),
+})
+
+// ====================
 // MAIN SIGNAL SCHEMAS
 // ====================
 
@@ -214,13 +228,29 @@ export const signalSchema = z.object({
     signal_type: z.enum(SIGNAL_TYPES),
     signal_context: z.enum(SIGNAL_CONTEXT).optional(),
     signal_title: z.string().min(1).max(LIMITS.SIGNAL_TITLE_MAX),
-    signal_description: z.string().nullable().optional(),
+    signal_summary: z.string().nullable().optional(),
     signal_author: z.string().min(1).max(LIMITS.SIGNAL_AUTHOR_MAX),
     signal_temperature: z.number()
         .min(LIMITS.SIGNAL_TEMPERATURE_MIN)
         .max(LIMITS.SIGNAL_TEMPERATURE_MAX)
         .default(0.0)
         .optional(),
+
+    // AI-extracted surface layer
+    signal_actions: z.array(z.string()).nullable().optional(),
+    signal_environment: z.string().nullable().optional(),
+    signal_entities: signalEntitiesSchema.nullable().optional(),
+    signal_density: z.number().min(-1.0).max(1.0).nullable().optional(),
+
+    // AI-extracted structural layer
+    signal_energy: z.string().nullable().optional(),
+    signal_state: z.string().nullable().optional(),
+    signal_orientation: z.string().nullable().optional(),
+    signal_substrate: z.string().nullable().optional(),
+    signal_ontological_states: z.array(z.string()).nullable().optional(),
+    signal_symbolic_elements: z.array(z.string()).nullable().optional(),
+    signal_subsystems: z.array(z.string()).nullable().optional(),
+    signal_dominant_language: z.array(z.string()).nullable().optional(),
 
     // Geospatial
     signal_latitude: z.number().min(GEO.LATITUDE_MIN).max(GEO.LATITUDE_MAX).nullable().optional(),
@@ -229,6 +259,7 @@ export const signalSchema = z.object({
 
     signal_status: z.enum(SIGNAL_STATUS).default('PENDING'),
     signal_visibility: z.enum(SIGNAL_VISIBILITY).default('PUBLIC'),
+    signal_visibility_sanctum: z.string().nullable().optional(),
 
     signal_metadata: z.record(z.string(), z.unknown()).nullable().optional(),
     signal_payload: z.record(z.string(), z.unknown()).nullable().optional(),
@@ -249,14 +280,29 @@ export const createSignalSchema = signalSchema.pick({
     signal_type: true,
     signal_context: true,
     signal_title: true,
-    signal_description: true,
+    signal_summary: true,
     signal_author: true,
     signal_temperature: true,
     signal_status: true,
     signal_visibility: true,
+    signal_visibility_sanctum: true,
 }).extend({
     coordinates: coordinatesSchema.optional(),
     signal_location: geographyPointSchema.nullable().optional(),
+
+    // AI-extracted fields (optional on create, will be populated by synthesis)
+    signal_actions: z.array(z.string()).optional(),
+    signal_environment: z.string().optional(),
+    signal_entities: signalEntitiesSchema.optional(),
+    signal_density: z.number().min(-1.0).max(1.0).optional(),
+    signal_energy: z.string().optional(),
+    signal_state: z.string().optional(),
+    signal_orientation: z.string().optional(),
+    signal_substrate: z.string().optional(),
+    signal_ontological_states: z.array(z.string()).optional(),
+    signal_symbolic_elements: z.array(z.string()).optional(),
+    signal_subsystems: z.array(z.string()).optional(),
+    signal_dominant_language: z.array(z.string()).optional(),
 
     signal_metadata: z.record(z.string(), z.unknown()).optional(),
     signal_payload: z.record(z.string(), z.unknown()).optional(),
@@ -274,18 +320,33 @@ export const updateSignalSchema = z.object({
     signal_type: z.enum(SIGNAL_TYPES).optional(),
     signal_context: z.enum(SIGNAL_CONTEXT).optional(),
     signal_title: z.string().min(1).max(LIMITS.SIGNAL_TITLE_MAX).optional(),
-    signal_description: z.string().nullable().optional(),
+    signal_summary: z.string().nullable().optional(),
     signal_author: z.string().min(1).max(LIMITS.SIGNAL_AUTHOR_MAX).optional(),
     signal_temperature: z.number()
         .min(LIMITS.SIGNAL_TEMPERATURE_MIN)
         .max(LIMITS.SIGNAL_TEMPERATURE_MAX)
         .optional(),
 
+    // AI-extracted fields
+    signal_actions: z.array(z.string()).nullable().optional(),
+    signal_environment: z.string().nullable().optional(),
+    signal_entities: signalEntitiesSchema.nullable().optional(),
+    signal_density: z.number().min(-1.0).max(1.0).nullable().optional(),
+    signal_energy: z.string().nullable().optional(),
+    signal_state: z.string().nullable().optional(),
+    signal_orientation: z.string().nullable().optional(),
+    signal_substrate: z.string().nullable().optional(),
+    signal_ontological_states: z.array(z.string()).nullable().optional(),
+    signal_symbolic_elements: z.array(z.string()).nullable().optional(),
+    signal_subsystems: z.array(z.string()).nullable().optional(),
+    signal_dominant_language: z.array(z.string()).nullable().optional(),
+
     coordinates: coordinatesSchema.optional(),
     signal_location: geographyPointSchema.nullable().optional(),
 
     signal_status: z.enum(SIGNAL_STATUS).optional(),
     signal_visibility: z.enum(SIGNAL_VISIBILITY).optional(),
+    signal_visibility_sanctum: z.string().nullable().optional(),
 
     signal_metadata: z.record(z.string(), z.unknown()).nullable().optional(),
     signal_payload: z.record(z.string(), z.unknown()).nullable().optional(),
