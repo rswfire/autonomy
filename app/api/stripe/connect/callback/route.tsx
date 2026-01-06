@@ -9,13 +9,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET!, {
     apiVersion: '2025-12-15.clover',
 })
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://builtwithautonomy.com'
+
 export async function GET(req: NextRequest) {
     try {
         const user = await requireAuthAPI()
         const realm_id = req.nextUrl.searchParams.get('realm_id')
 
         if (!realm_id) {
-            return NextResponse.redirect(new URL('/admin/realms', req.url))
+            return NextResponse.redirect(new URL('/admin/realms', BASE_URL))
         }
 
         const realm = await prisma.realm.findFirst({
@@ -26,7 +28,7 @@ export async function GET(req: NextRequest) {
         })
 
         if (!realm) {
-            return NextResponse.redirect(new URL('/admin/realms', req.url))
+            return NextResponse.redirect(new URL('/admin/realms', BASE_URL))
         }
 
         const settings = realm.realm_settings as any
@@ -51,10 +53,10 @@ export async function GET(req: NextRequest) {
             data: { realm_settings: settings },
         })
 
-        return NextResponse.redirect(new URL(`/admin/realms/${realm_id}/sanctum`, req.url))
+        return NextResponse.redirect(new URL(`/admin/realms/${realm_id}/sanctum`, BASE_URL))
     } catch (error) {
         console.error('Stripe callback error:', error)
         const realm_id = req.nextUrl.searchParams.get('realm_id')
-        return NextResponse.redirect(new URL(`/admin/realms/${realm_id}/sanctum?error=onboarding_failed`, req.url))
+        return NextResponse.redirect(new URL(`/admin/realms/${realm_id}/sanctum?error=onboarding_failed`, BASE_URL))
     }
 }
