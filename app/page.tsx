@@ -17,6 +17,12 @@ const autonomyVideos = [
         youtube_id: 'suJQC6pezDc',
         thumbnail: 'https://i.ytimg.com/vi/suJQC6pezDc/sddefault.jpg',
     },
+    {
+        id: '01KE92CNZ7TB22RYXXACP1ERXH',
+        title: 'Demonstrating Autonomy Project Architecture and Development',
+        youtube_id: 'AAxIg3Qf1lM',
+        thumbnail: 'https://i.ytimg.com/vi/AAxIg3Qf1lM/sddefault.jpg',
+    },
 ]
 
 export default function HomePage() {
