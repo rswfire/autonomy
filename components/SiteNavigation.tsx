@@ -80,7 +80,10 @@ export function SiteNavigation({ onClose }: { onClose?: () => void }) {
         },
         {
             title: 'Deployment',
-            items: [{ name: 'Self-Hosting', href: '/docs/deployment/self-hosting', icon: 'Server' }],
+            items: [
+                { name: 'Monetization', href: '/docs/deployment/monetization', icon: 'Server' },
+                { name: 'Self-Hosting', href: '/docs/deployment/self-hosting', icon: 'Server' },
+            ],
         },
     ]
 
