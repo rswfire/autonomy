@@ -1,5 +1,5 @@
 // lib/services/analysis.ts
-import { ModelRouter } from './model-router'
+import { ModelRouter } from '@/lib/services/model-router'
 import { getDefaultLlmAccount, getLlmAccount, getRealmLlmSettings } from '@/lib/utils/realm-settings'
 import { prisma } from '@/lib/db'
 import fs from 'fs/promises'
