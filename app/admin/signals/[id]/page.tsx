@@ -5,7 +5,6 @@ import { getSignalById } from '@/lib/queries/signal'
 import { getUserRealms } from '@/lib/queries/realm'
 import { requireAuth } from '@/lib/utils/auth'
 import { notFound } from 'next/navigation'
-import { AnalyzeButton } from '@/components/admin/AnalyzeButton'
 
 export default async function EditSignalPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params
@@ -19,10 +18,13 @@ export default async function EditSignalPage({ params }: { params: Promise<{ id:
         notFound()
     }
 
-    // Convert Decimal to number for client component
     const signalForClient = {
         ...signal,
-        signal_temperature: signal.signal_temperature ? Number(signal.signal_temperature) : 0.0,
+        stamp_created: signal.stamp_created?.toISOString(),
+        stamp_updated: signal.stamp_updated?.toISOString(),
+        stamp_imported: signal.stamp_imported?.toISOString(),
+        signal_temperature: signal.signal_temperature ? Number(signal.signal_temperature) : null,
+        signal_density: signal.signal_density ? Number(signal.signal_density) : null,
     }
 
     return (

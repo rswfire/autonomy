@@ -1,21 +1,23 @@
 // lib/services/analysis.ts
-import { ModelRouter } from '@/lib/services/model-router'
+import { ModelRouter } from './model-router'
 import { getDefaultLlmAccount, getLlmAccount, getRealmLlmSettings } from '@/lib/utils/realm-settings'
 import { prisma } from '@/lib/db'
 import fs from 'fs/promises'
 import path from 'path'
 
 interface AnalysisFields {
-    signal_environment?: string
+    signal_title?: string | null
+    signal_summary?: string | null
+    signal_environment?: string | null
     signal_temperature?: number | null
     signal_density?: number | null
     signal_actions?: any
     signal_entities?: any
     signal_tags?: any
-    signal_energy?: string
-    signal_state?: string
-    signal_orientation?: string
-    signal_substrate?: string
+    signal_energy?: string | null
+    signal_state?: string | null
+    signal_orientation?: string | null
+    signal_substrate?: string | null
     signal_ontological_states?: any
     signal_symbolic_elements?: any
     signal_subsystems?: any
@@ -57,8 +59,10 @@ export class AnalysisService {
 
             // Build signal context
             const signalContext = this.buildSignalContext(signal)
-            const annotations = signal.signal_annotations
-                ? `\n**Annotations:** ${signal.signal_annotations}\n\n*These are notes from the realm holder about this specific signal. Treat them as high-priority context.*\n`
+            const annotations = signal.signal_annotations?.user_notes?.length > 0
+                ? `\n**Annotations:**\n${signal.signal_annotations.user_notes.map((note: any) =>
+                    `- ${note.note} (${new Date(note.timestamp).toLocaleDateString()})`
+                ).join('\n')}\n\n*These are notes from the realm holder about this specific signal. Treat them as high-priority context.*\n`
                 : ''
 
             // Build surface prompts
@@ -80,11 +84,35 @@ export class AnalysisService {
 
             // Run surface analysis
             console.log('Running surface analysis...')
-            const surfaceResponse = await this.router.generate(
-                account.model,
-                surfaceUserPrompt,
-                surfaceSystemPrompt
-            )
+            let surfaceFields = {}
+            let surfaceError = null
+            let surfaceResponse = null
+
+            try {
+                surfaceResponse = await this.router.generate(
+                    account,
+                    surfaceUserPrompt,
+                    surfaceSystemPrompt
+                )
+                surfaceFields = this.parseSurfaceResponse(surfaceResponse.content)
+            } catch (error) {
+                surfaceError = error instanceof Error ? error.message : 'Surface analysis failed'
+                console.error('Surface analysis error:', error)
+            }
+
+            // Log surface analysis
+            await this.logAnalysisHistory(signal.signal_id, {
+                type: 'analysis_surface',
+                timestamp: new Date().toISOString(),
+                account_id: account.id,
+                model: account.model,
+                system_prompt: surfaceSystemPrompt,
+                user_prompt: surfaceUserPrompt,
+                response: surfaceResponse?.content || null,
+                tokens: surfaceResponse?.usage?.total_tokens || null,
+                fields_updated: Object.keys(surfaceFields),
+                error: surfaceError,
+            })
 
             // Build structure prompts
             const structureSystemPrompt = [
@@ -105,30 +133,46 @@ export class AnalysisService {
 
             // Run structure analysis
             console.log('Running structure analysis...')
-            const structureResponse = await this.router.generate(
-                account.model,
-                structureUserPrompt,
-                structureSystemPrompt
-            )
+            let structureFields = {}
+            let structureError = null
+            let structureResponse = null
 
-            // Parse responses
-            const surfaceFields = this.parseSurfaceResponse((surfaceResponse as any).content)
-            const structureFields = this.parseStructureResponse((structureResponse as any).content)
+            try {
+                structureResponse = await this.router.generate(
+                    account,
+                    structureUserPrompt,
+                    structureSystemPrompt
+                )
+                structureFields = this.parseStructureResponse(structureResponse.content)
+            } catch (error) {
+                structureError = error instanceof Error ? error.message : 'Structure analysis failed'
+                console.error('Structure analysis error:', error)
+            }
+
+            // Log structure analysis
+            await this.logAnalysisHistory(signal.signal_id, {
+                type: 'analysis_structure',
+                timestamp: new Date().toISOString(),
+                account_id: account.id,
+                model: account.model,
+                system_prompt: structureSystemPrompt,
+                user_prompt: structureUserPrompt,
+                response: structureResponse?.content || null,
+                tokens: structureResponse?.usage?.total_tokens || null,
+                fields_updated: Object.keys(structureFields),
+                error: structureError,
+            })
+
+            // If both failed, return null
+            if (surfaceError && structureError) {
+                console.error('Both analysis passes failed')
+                return null
+            }
 
             const analysisFields = {
                 ...surfaceFields,
                 ...structureFields,
             }
-
-            // Log to history
-            await this.logAnalysisHistory(signal.signal_id, {
-                timestamp: new Date().toISOString(),
-                account_id: account.id,
-                model: account.model,
-                surface_tokens: (surfaceResponse as any).usage?.total_tokens,
-                structure_tokens: (structureResponse as any).usage?.total_tokens,
-                fields_updated: Object.keys(analysisFields),
-            })
 
             console.log('Analysis complete:', Object.keys(analysisFields))
             return analysisFields
@@ -171,11 +215,12 @@ export class AnalysisService {
 
     private parseSurfaceResponse(content: string): Partial<AnalysisFields> {
         try {
-            // Remove markdown code fences if present
             const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
             const parsed = JSON.parse(cleaned)
 
             return {
+                signal_title: parsed.title || null,
+                signal_summary: parsed.summary || null,
                 signal_environment: parsed.environment || null,
                 signal_temperature: parsed.temperature ? parseFloat(parsed.temperature) : null,
                 signal_density: parsed.density ? parseFloat(parsed.density) : null,
@@ -220,19 +265,29 @@ export class AnalysisService {
                 select: { signal_history: true },
             })
 
-            const history = (signal?.signal_history as any[]) || []
+            // Force it to be an array
+            let history: any[] = []
 
-            history.push({
-                type: 'analysis',
-                ...entry,
-            })
+            if (signal?.signal_history) {
+                if (Array.isArray(signal.signal_history)) {
+                    history = signal.signal_history
+                } else {
+                    // If it's an object or something else, wrap it in array
+                    history = [signal.signal_history]
+                }
+            }
+
+            history.push(entry)
 
             await prisma.signal.update({
                 where: { signal_id: signalId },
                 data: { signal_history: history as any },
             })
+
+            console.log('Successfully logged analysis history')
         } catch (error) {
             console.error('Failed to log analysis history:', error)
+            throw error
         }
     }
 }

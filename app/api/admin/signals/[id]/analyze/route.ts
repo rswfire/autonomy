@@ -39,9 +39,13 @@ export async function POST(
         }
 
         // Update signal with analysis results
+        const cleanFields = Object.fromEntries(
+            Object.entries(fields).filter(([_, v]) => v !== null)
+        )
+
         const updated = await prisma.signal.update({
             where: { signal_id: id },
-            data: fields,
+            data: cleanFields,
         })
 
         return NextResponse.json({

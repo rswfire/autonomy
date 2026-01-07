@@ -180,11 +180,19 @@ export const signalPayloadSchemas = {
 // ====================
 
 const signalHistorySchema = z.array(z.object({
+    type: z.string().optional(), // Add this for analysis entries
     timestamp: z.string(),
     model: z.string().optional(),
-    fields_changed: z.array(z.string()),
-    previous_values: z.record(z.string(), z.unknown()),
-    trigger: z.enum(['creation', 'user_edit', 'user_annotation', 're_synthesis', 'manual_override']),
+    account_id: z.string().optional(), // Add this for analysis entries
+    error: z.string().nullable().optional(), // Add this for analysis entries
+    response: z.string().nullable().optional(), // Add this for analysis entries
+    user_prompt: z.string().optional(), // Add this for analysis entries
+    system_prompt: z.string().optional(), // Add this for analysis entries
+    tokens: z.number().nullable().optional(), // Add this for analysis entries
+    fields_changed: z.array(z.string()).optional(), // Make optional
+    fields_updated: z.array(z.string()).optional(), // Add this for analysis entries
+    previous_values: z.record(z.string(), z.unknown()).optional(), // Make optional
+    trigger: z.enum(['creation', 'user_edit', 'user_annotation', 're_synthesis', 'manual_override']).optional(), // Make optional
     user_id: z.string().optional(),
     synthesis_id: z.string().optional(),
 }))
@@ -209,13 +217,13 @@ const signalAnnotationsSchema = z.object({
 // ====================
 
 const signalEntitiesSchema = z.object({
-    people: z.array(z.string()).optional(),
-    animals: z.array(z.string()).optional(),
-    places: z.array(z.string()).optional(),
-    infrastructure: z.array(z.string()).optional(),
-    organizations: z.array(z.string()).optional(),
-    concepts: z.array(z.string()).optional(),
-    media: z.array(z.string()).optional(),
+    people: z.array(z.string()).nullable().optional(),
+    animals: z.array(z.string()).nullable().optional(),
+    places: z.array(z.string()).nullable().optional(),
+    infrastructure: z.array(z.string()).nullable().optional(),
+    organizations: z.array(z.string()).nullable().optional(),
+    concepts: z.array(z.string()).nullable().optional(),
+    media: z.array(z.string()).nullable().optional(),
 })
 
 // ====================

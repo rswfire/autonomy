@@ -1,8 +1,12 @@
 // lib/services/model-router.ts
 
 interface ModelResponse {
-    model: string
-    output: string
+    content: string
+    usage?: {
+        input_tokens?: number
+        output_tokens?: number
+        total_tokens?: number
+    }
 }
 
 interface LlmMessage {
@@ -35,28 +39,44 @@ interface OpenAiApiResponse {
     usage?: {
         prompt_tokens: number
         completion_tokens: number
+        total_tokens: number
     }
+}
+
+interface LlmAccount {
+    id: string
+    name: string
+    provider: 'claude' | 'openai' | 'local'
+    api_key: string
+    model: string
+    enabled: boolean
 }
 
 export class ModelRouter {
     /**
-     * Generate completion from specified model
+     * Generate completion using account details
      */
     async generate(
-        model: string,
+        account: LlmAccount,
         userPrompt: string,
         systemPrompt?: string
     ): Promise<ModelResponse> {
-        switch (model) {
-            case 'claude':
-                return this.callClaude(systemPrompt || '', userPrompt)
+        if (!account.enabled) {
+            throw new Error('LLM account is disabled')
+        }
 
-            // Future: Add OpenAI, local models, etc.
-            // case 'gpt-4':
-            //     return this.callOpenAI(userPrompt, systemPrompt)
+        switch (account.provider) {
+            case 'claude':
+                return this.callClaude(account, systemPrompt || '', userPrompt)
+
+            case 'openai':
+                return this.callOpenAI(account, userPrompt, systemPrompt)
+
+            case 'local':
+                return this.callLocal(account, userPrompt, systemPrompt)
 
             default:
-                throw new Error(`Unknown model: ${model}`)
+                throw new Error(`Unknown provider: ${account.provider}`)
         }
     }
 
@@ -64,24 +84,19 @@ export class ModelRouter {
      * Call Claude API (Anthropic)
      */
     private async callClaude(
+        account: LlmAccount,
         systemPrompt: string,
         userPrompt: string
     ): Promise<ModelResponse> {
-        const apiKey = process.env.CLAUDE_API_KEY
-
-        if (!apiKey) {
-            throw new Error('CLAUDE_API_KEY not set in environment')
-        }
-
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
-                'x-api-key': apiKey,
+                'x-api-key': account.api_key,
                 'anthropic-version': '2023-06-01',
                 'content-type': 'application/json',
             },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: account.model,
                 max_tokens: 8192,
                 temperature: 0.5,
                 system: systemPrompt,
@@ -107,32 +122,31 @@ export class ModelRouter {
         }
 
         return {
-            model: json.model || 'claude-sonnet-4-20250514',
-            output: json.content[0].text,
+            content: json.content[0].text,
+            usage: json.usage ? {
+                input_tokens: json.usage.input_tokens,
+                output_tokens: json.usage.output_tokens,
+                total_tokens: json.usage.input_tokens + json.usage.output_tokens,
+            } : undefined,
         }
     }
 
     /**
-     * Placeholder for OpenAI
+     * Call OpenAI API
      */
     private async callOpenAI(
+        account: LlmAccount,
         userPrompt: string,
         systemPrompt?: string
     ): Promise<ModelResponse> {
-        const apiKey = process.env.OPENAI_API_KEY
-
-        if (!apiKey) {
-            throw new Error('OPENAI_API_KEY not set in environment')
-        }
-
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${account.api_key}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: 'gpt-4',
+                model: account.model,
                 messages: [
                     ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
                     { role: 'user', content: userPrompt },
@@ -153,19 +167,46 @@ export class ModelRouter {
         }
 
         return {
-            model: json.model || 'gpt-4',
-            output: json.choices[0].message.content,
+            content: json.choices[0].message.content,
+            usage: json.usage,
         }
     }
 
     /**
-     * Placeholder for local models (Ollama, vLLM, etc.)
+     * Call local model (Ollama, vLLM, etc.)
      */
     private async callLocal(
-        model: string,
+        account: LlmAccount,
         userPrompt: string,
         systemPrompt?: string
     ): Promise<ModelResponse> {
-        throw new Error('Local model integration not yet implemented')
+        // Assuming Ollama-compatible API
+        const response = await fetch('http://localhost:11434/api/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: account.model,
+                prompt: systemPrompt ? `${systemPrompt}\n\n${userPrompt}` : userPrompt,
+                stream: false,
+            }),
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('Local model API error:', errorText)
+            throw new Error(`Local model API error: ${response.status} - ${errorText}`)
+        }
+
+        const json = await response.json()
+
+        if (!json.response) {
+            throw new Error('Local model response missing content')
+        }
+
+        return {
+            content: json.response,
+        }
     }
 }

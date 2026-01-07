@@ -1,5 +1,4 @@
 // app/api/admin/signals/[id]/route.ts
-// app/api/admin/signals/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { updateSignalSchema } from '@/lib/validation/signal'
 import { getSignalById, updateSignal, deleteSignal } from '@/lib/queries/signal'
@@ -13,7 +12,7 @@ export async function GET(
     const params = await context.params
 
     try {
-        const user = await requireAuthAPI ()
+        const user = await requireAuthAPI()
         const signal = await getSignalById(params.id, user.user_id)
 
         if (!signal) {
@@ -49,28 +48,64 @@ export async function PATCH(
         // Fetch existing signal for history and annotations
         const existing = await db.signal.findUnique({
             where: { signal_id: params.id },
-            select: { signal_annotations: true, signal_history: true }
         })
 
         if (!existing) {
             return NextResponse.json({ error: 'Signal not found' }, { status: 404 })
         }
 
-        // Add update history entry (always happens on any update)
+        // Track which fields are being changed
+        const fieldsChanged: string[] = []
+        const previousValues: Record<string, any> = {}
+
+        // Check each field in body against existing
+        for (const key of Object.keys(body)) {
+            if (key === 'signal_id' || key === 'new_annotation' || key === 'trigger_synthesis') {
+                continue
+            }
+
+            const existingValue = (existing as any)[key]
+            const newValue = body[key]
+
+            // Compare values (handle nulls and undefined)
+            const isDifferent = JSON.stringify(existingValue) !== JSON.stringify(newValue)
+
+            if (isDifferent) {
+                fieldsChanged.push(key)
+                previousValues[key] = existingValue
+            }
+        }
+
+        // Add update history entry
         const historyEntry = {
+            type: 'user_edit',
             timestamp: new Date().toISOString(),
-            action: 'updated',
+            trigger: 'user_edit' as const,
+            fields_changed: fieldsChanged,
+            previous_values: previousValues,
             user_id: user.user_id,
         }
 
+        const existingHistory = ((existing.signal_history as any[]) || [])
+            .filter((entry: any) => {
+                // Must be an object
+                if (!entry || typeof entry !== 'object') return false
+                // Must have timestamp
+                if (!entry.timestamp) return false
+                // Must have type OR trigger (for backwards compatibility)
+                if (!entry.type && !entry.trigger) return false
+                return true
+            })
+
         body.signal_history = [
-            ...((existing.signal_history as any) || []),
+            ...existingHistory,
             historyEntry
         ]
 
         // Handle annotation addition
         if (body.new_annotation?.trim()) {
             const existingAnnotations = (existing.signal_annotations as any) || { user_notes: [] }
+
             body.signal_annotations = {
                 ...existingAnnotations,
                 user_notes: [
@@ -85,14 +120,15 @@ export async function PATCH(
 
             // Add annotation-specific history entry
             body.signal_history.push({
+                type: 'user_annotation',
                 timestamp: new Date().toISOString(),
-                action: 'annotation_added',
-                field: 'signal_annotations',
+                trigger: 'user_annotation' as const,
+                fields_changed: ['signal_annotations'],
+                previous_values: {
+                    signal_annotations: existing.signal_annotations
+                },
                 user_id: user.user_id,
             })
-
-            // TODO: Queue synthesis job when Phase 4 is ready
-            // await queueSynthesis({ signal_id: params.id, reason: 'annotation_added' })
 
             delete body.new_annotation
             delete body.trigger_synthesis
@@ -130,7 +166,6 @@ export async function PATCH(
     }
 }
 
-
 export async function DELETE(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
@@ -138,7 +173,7 @@ export async function DELETE(
     const params = await context.params
 
     try {
-        const user = await requireAuthAPI ()
+        const user = await requireAuthAPI()
         await deleteSignal(params.id, user.user_id)
 
         return NextResponse.json({ success: true })

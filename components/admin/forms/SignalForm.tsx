@@ -1,6 +1,8 @@
 // components/admin/forms/SignalForm.tsx
 'use client'
 
+import {AnalysisHistory} from "@/components/admin/AnalysisHistory";
+import {AnnotationsPanel} from "@/components/admin/AnnotationsPanel";
 import {SIGNAL_CONTEXT, SIGNAL_STATUS, SIGNAL_TYPES, SIGNAL_VISIBILITY} from '@/lib/constants'
 import type {Realm} from '@/lib/types'
 import {useRouter} from 'next/navigation'
@@ -56,6 +58,7 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms,
     const [error, setError] = useState<string | null>(null)
     const [historyEntries, setHistoryEntries] = useState(defaultValues?.signal_history || [])
     const [annotations, setAnnotations] = useState(defaultValues?.signal_annotations || {})
+    const [triggerReanalysis, setTriggerReanalysis] = useState(false)
 
     const formDefaults = getSignalFormDefaults(defaultValues)
     const { register, control, handleSubmit, setValue, watch, formState: { errors } } = useForm({
@@ -101,7 +104,9 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms,
             const newAnnotations = buildAnnotations(data.new_annotation, defaultValues?.signal_annotations)
             if (newAnnotations) {
                 processedData.signal_annotations = newAnnotations
-                processedData.trigger_synthesis = true
+                if (triggerReanalysis) {
+                    processedData.trigger_synthesis = true
+                }
             }
 
             // Clean up fields that shouldn't be sent
@@ -136,6 +141,36 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms,
 
             toast.success(mode === 'create' ? 'Signal created' : 'Signal updated')
             onSuccess?.()
+
+            if (result.signal && triggerReanalysis) {
+                toast.info('Analysis started...', {
+                    duration: Infinity,
+                    id: 'analysis',
+                    description: 'Safe to navigate away. Page will refresh when complete, or check back later to see results.'
+                })
+
+                // Trigger analysis
+                const analysisResponse = await fetch(`/api/admin/signals/${defaultValues?.signal_id}/analyze`, {
+                    method: 'POST',
+                })
+
+                const analysisData = await analysisResponse.json()
+
+                toast.dismiss('analysis')
+
+                if (analysisResponse.ok) {
+                    toast.success('Analysis complete!', {
+                        description: `Updated ${analysisData.fields.length} fields`,
+                    })
+                } else {
+                    toast.error('Analysis failed', {
+                        description: analysisData.error,
+                    })
+                }
+
+                // Refresh to show new data
+                window.location.reload()
+            }
 
         } catch (err) {
             const message = err instanceof Error ? err.message : 'An error occurred'
@@ -356,57 +391,23 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms,
                 </FormSection>
 
                 <FormSection
-                    title="History & Annotations"
-                    description="Audit trail and user context for synthesis"
+                    title="Analysis History"
+                    description="Complete audit trail of all AI analysis runs with full input/output"
                 >
-                    {mode === 'edit' && historyEntries.length > 0 && (
-                        <div className="mb-6">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">History</h4>
-                            <div className="bg-gray-50 rounded border border-gray-200 p-4 max-h-64 overflow-y-auto">
-                                {historyEntries.map((entry: any, idx: number) => (
-                                    <div key={idx} className="text-sm mb-2 last:mb-0">
-                                        <span className="text-gray-500 font-mono">{entry.timestamp}</span>
-                                        <span className="mx-2">→</span>
-                                        <span className="font-medium">{entry.action}</span>
-                                        {entry.field && <span className="text-gray-600 ml-2">({entry.field})</span>}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    <AnalysisHistory history={historyEntries} />
+                </FormSection>
 
-                    <div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Annotations</h4>
-
-                        {annotations?.user_notes && annotations.user_notes.length > 0 && (
-                            <div className="bg-blue-50 rounded border border-blue-200 p-4 mb-4 max-h-48 overflow-y-auto">
-                                {annotations.user_notes.map((note: any, idx: number) => (
-                                    <div key={idx} className="text-sm mb-3 last:mb-0 pb-3 last:pb-0 border-b border-blue-200 last:border-0">
-                                        <div className="text-gray-500 font-mono text-xs mb-1">{note.timestamp}</div>
-                                        <div className="text-gray-800">{note.note}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <FormField
-                            label="Add Annotation"
-                            name="new_annotation"
-                            description="Context for synthesis pipeline — triggers re-processing"
-                        >
-                            <Textarea
-                                {...register('new_annotation')}
-                                rows={3}
-                                placeholder="Add context, corrections, or synthesis instructions..."
-                            />
-                        </FormField>
-
-                        {watch('new_annotation') && (
-                            <p className="text-sm text-orange-600 mt-2">
-                                ⚠️ Saving this annotation will trigger signal re-synthesis
-                            </p>
-                        )}
-                    </div>
+                <FormSection
+                    title="Annotations & Re-analysis"
+                    description="Add high-priority context to correct or clarify signal details"
+                >
+                    <AnnotationsPanel
+                        annotations={annotations}
+                        newAnnotation={watch('new_annotation') || ''}
+                        onNewAnnotationChange={(value) => setValue('new_annotation', value)}
+                        triggerReanalysis={triggerReanalysis}
+                        onTriggerReanalysisChange={setTriggerReanalysis}
+                    />
                 </FormSection>
 
                 <div className="flex gap-3 pt-8 border-t border-gray-200">

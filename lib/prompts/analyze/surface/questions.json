@@ -1,4 +1,8 @@
 {
+  "title": "Generate a clear, descriptive title for this transmission. Use present tense or declarative phrasing (e.g., 'Moving to Work Center', 'Reflecting on Collapse Timeline', 'Processing Financial Constraints'). Keep under 10 words.",
+
+  "summary": "Summarize what happened in this transmission. Use third-person narrative. Include key events, decisions, themes, and facts without interpreting emotional or symbolic meaning. Be thorough but concise.",
+
   "environment": "What is the physical or digital environment of this signal? Describe the setting, location, or context in which it emerged. Be factual and concise.",
 
   "temperature": "Rate the intensity or volatility of this signal on a scale from 0.0 to 1.0, where 0.0 is calm/stable and 1.0 is highly charged/volatile. Consider emotional intensity, urgency, and energetic pressure. Return only the number.",

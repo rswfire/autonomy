@@ -1,24 +1,9 @@
 ## SIGNAL
 
 **Type:** {{signal_type}}  
-**Title:** {{signal_title}}  
 **Context:** {{signal_context}}  
-**Date:** {{signal_date}}  
-**Summary:** {{signal_summary}}
+**Date:** {{signal_date}}
 {{signal_annotations}}
-
----
-
-**Context Key:**
-- CAPTURE: Generic documentation, intent to be determined
-- NOTE: Quick capture, ephemeral thought
-- JOURNAL: Reflective writing, daily log
-- CODE: Technical artifact, implementation
-- REFERENCE: External source, citation
-- OBSERVATION: Field note, documented reality
-- ARTIFACT: Created work, finished piece
-
----
 
 {{signal_content}}
 
@@ -37,6 +22,8 @@ Answer the following questions about this signal. Return your response as valid 
 Return only a JSON object with the following structure:
 ```json
 {
+  "title": "...",
+  "summary": "...",
   "environment": "...",
   "temperature": 0.0,
   "density": 0.0,
@@ -50,6 +37,8 @@ Return only a JSON object with the following structure:
 ```
 
 **Field definitions:**
+- `title`: Clear, descriptive title under 10 words
+- `summary`: Third-person narrative summary of what happened
 - `environment`: Text description of physical/digital setting (max 500 chars)
 - `temperature`: 0.0-1.0 (intensity/volatility of the signal)
 - `density`: 0.0-1.0 (information density)
