@@ -26,6 +26,7 @@ import {
     getSignalFormDefaults,
     extractLocationState
 } from '@/lib/forms/signal/defaults'
+import { AnalyzeButton } from '../AnalyzeButton'
 
 interface SignalFormProps {
     mode: 'create' | 'edit'
@@ -33,6 +34,7 @@ interface SignalFormProps {
     onSuccess?: () => void
     isPostgres: boolean
     realms: Realm[]
+    signalId?: string
 }
 
 const SIGNAL_CONTEXT_DESCRIPTIONS = {
@@ -48,7 +50,7 @@ const SIGNAL_CONTEXT_DESCRIPTIONS = {
 const SIGNAL_TYPES_SORTED = [...SIGNAL_TYPES].sort()
 const SIGNAL_CONTEXT_SORTED = [...SIGNAL_CONTEXT].sort()
 
-export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms }: SignalFormProps) {
+export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms, signalId }: SignalFormProps) {
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -161,6 +163,12 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms 
                 <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded">
                     <p className="font-medium">Error</p>
                     <p className="text-sm mt-1">{error}</p>
+                </div>
+            )}
+
+            {mode === 'edit' && signalId && (
+                <div className="flex justify-end mb-4">
+                    <AnalyzeButton signalId={signalId} />
                 </div>
             )}
 

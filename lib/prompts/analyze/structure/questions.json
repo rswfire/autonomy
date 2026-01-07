@@ -1,0 +1,17 @@
+{
+  "energy": "What is the energetic quality of this signal? Describe it in one word or short phrase (e.g., 'grounded', 'intense', 'calm', 'turbulent', 'focused', 'scattered', 'resolute'). Return only the phrase.",
+
+  "state": "What state or condition is present in this signal? Describe it in one word or short phrase (e.g., 'stable', 'transitional', 'coherent', 'fragmented', 'rupturing', 'integrating', 'embedded'). Return only the phrase.",
+
+  "orientation": "What direction is this signal pointing? What is it moving toward or away from? Return as short directional phrase (e.g., 'toward sovereignty', 'away from institutional capture', 'building infrastructure', 'into solitude').",
+
+  "substrate": "What is the structural substrate of this signal? What architecture is being held? What ontological position is being taken? What is being built or dissolved? Respond in 2-3 sentences.",
+
+  "ontological_states": "What ontological states or conditions are present in this signal? Return 2-4 tags (e.g., 'sovereign', 'embedded', 'transitional', 'coherent', 'fragmented', 'rupturing', 'integrating'). Return as array.",
+
+  "symbolic_elements": "Identify any symbolic or archetypal elements present (e.g., 'fire', 'threshold', 'mirror', 'grid', 'edge', 'rupture', 'ocean', 'wind', 'infrastructure'). Treat these as field markers, not metaphors. Return as array. If none are present, return empty array.",
+
+  "subsystems": "Which subsystems are engaged in this signal? Consider: cognitive, ethical, somatic, emotional, relational, infrastructural, ecological, technical. Return as array of engaged subsystems.",
+
+  "dominant_language": "What language domains are dominant in this signal? Consider: technical, architectural, ecological, ontological, ethical, relational, infrastructural, poetic. Return as array of 2-4 domains."
+}

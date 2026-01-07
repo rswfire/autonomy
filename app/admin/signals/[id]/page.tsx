@@ -5,6 +5,7 @@ import { getSignalById } from '@/lib/queries/signal'
 import { getUserRealms } from '@/lib/queries/realm'
 import { requireAuth } from '@/lib/utils/auth'
 import { notFound } from 'next/navigation'
+import { AnalyzeButton } from '@/components/admin/AnalyzeButton'
 
 export default async function EditSignalPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params
@@ -31,6 +32,7 @@ export default async function EditSignalPage({ params }: { params: Promise<{ id:
                 defaultValues={signalForClient}
                 realms={realmData.realms}
                 isPostgres={!!isPostgres}
+                signalId={signal.signal_id}
             />
         </div>
     )
