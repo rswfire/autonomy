@@ -1,6 +1,7 @@
 // components/admin/LlmSettingsManager.tsx
 'use client'
 
+import {generateLlmAccountId} from "@/lib/utils/realm-settings";
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from './ui/Button'
@@ -9,34 +10,23 @@ import { Select } from './ui/Select'
 import { Card } from './ui/Card'
 import Icon from '@/components/Icon'
 import { toast } from 'sonner'
-
-interface LlmAccount {
-    id: string
-    name: string
-    provider: 'claude' | 'openai' | 'local'
-    api_key: string
-    model: string
-    enabled: boolean
-}
-
-interface LlmSettings {
-    accounts: LlmAccount[]
-    default_account_id: string | null
-    auto_analyze: boolean
-}
+import type {LlmAccount, RealmLlmSettings} from '@/lib/types/realm'
 
 interface LlmSettingsManagerProps {
     realmId: string
-    settings: LlmSettings
+    settings: RealmLlmSettings
 }
 
 export function LlmSettingsManager({ realmId, settings }: LlmSettingsManagerProps) {
     const router = useRouter()
-    const [formData, setFormData] = useState<LlmSettings>(settings)
+    const [formData, setFormData] = useState<RealmLlmSettings>(settings)
     const [editingAccount, setEditingAccount] = useState<LlmAccount | null>(null)
     const [isAddingAccount, setIsAddingAccount] = useState(false)
     const [showApiKey, setShowApiKey] = useState(false)
     const [isTesting, setIsTesting] = useState(false)
+    const [isEditingContext, setIsEditingContext] = useState(false)
+    const [contextDraft, setContextDraft] = useState(settings.realm_context || '')
+    const [realmHolderName, setRealmHolderName] = useState(settings.realm_holder_name || '')
 
     const handleAutoAnalyzeToggle = async (enabled: boolean) => {
         const newFormData = {
@@ -65,13 +55,42 @@ export function LlmSettingsManager({ realmId, settings }: LlmSettingsManagerProp
         }
     }
 
+    const handleSaveContext = async () => {
+        const newFormData = {
+            ...formData,
+            realm_context: contextDraft,
+            realm_holder_name: realmHolderName,
+        }
+
+        try {
+            const response = await fetch(`/api/admin/realms/${realmId}/llm-settings`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newFormData),
+            })
+
+            if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.error || 'Failed to save')
+            }
+
+            setFormData(newFormData)
+            setIsEditingContext(false)
+            toast.success('Realm context updated')
+            router.refresh()
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to save'
+            toast.error('Save failed', { description: message })
+        }
+    }
+
     const handleAddAccount = () => {
         setEditingAccount({
-            id: `llm_${Date.now()}`,
+            id: generateLlmAccountId(),
             name: '',
             provider: 'claude',
             api_key: '',
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-sonnet-4-5-20250929',
             enabled: true,
         })
         setIsAddingAccount(true)
@@ -217,6 +236,107 @@ export function LlmSettingsManager({ realmId, settings }: LlmSettingsManagerProp
 
     return (
         <div className="space-y-6">
+            {/* Realm Context Card */}
+            <Card>
+                <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 className="text-xl font-semibold text-gray-900">Realm Context</h2>
+                            <p className="text-sm text-gray-600 mt-1">
+                                Instructions injected into all analysis and synthesis prompts for this realm.
+                            </p>
+                        </div>
+                        {!isEditingContext && (
+                            <Button
+                                onClick={() => {
+                                    setContextDraft(formData.realm_context || '')
+                                    setIsEditingContext(true)
+                                }}
+                                size="sm"
+                                variant="outline"
+                            >
+                                <Icon name="Edit" size={16} className="mr-2" />
+                                Edit
+                            </Button>
+                        )}
+                    </div>
+
+                    {isEditingContext ? (
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+    <textarea
+        value={contextDraft}
+        onChange={(e) => setContextDraft(e.target.value)}
+        rows={12}
+        placeholder="Add instructions for how AI should analyze signals in this realm..."
+        className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+    />
+                                {!contextDraft && (
+                                    <div className="text-xs text-gray-500 space-y-1">
+                                        <p className="font-medium">Examples:</p>
+                                        <ul className="list-disc list-inside ml-2 space-y-0.5">
+                                            <li>This realm documents personal reflections. Use a contemplative tone.</li>
+                                            <li>Focus on technical patterns and architectural decisions.</li>
+                                            <li>Treat intensity and contradiction as valid signal, not disorder.</li>
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                            {/* Realm Holder Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Realm Holder Name
+                                </label>
+                                <Input
+                                    value={realmHolderName}
+                                    onChange={(e) => setRealmHolderName(e.target.value)}
+                                    placeholder="Your name or alias"
+                                />
+                                <p className="mt-1 text-xs text-gray-500">
+                                    Used in prompts instead of &quot;the realm holder&quot; &mdash; keeps analysis personal and direct.
+                                </p>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button onClick={handleSaveContext}>
+                                    Save Context
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setIsEditingContext(false)
+                                        setContextDraft(formData.realm_context || '')
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                            <div>
+                                <p className="text-xs font-semibold text-gray-600 mb-1">Realm Holder Name</p>
+                                {formData.realm_holder_name ? (
+                                    <p className="text-sm text-gray-800">{formData.realm_holder_name}</p>
+                                ) : (
+                                    <p className="text-gray-500 text-sm italic">Not set</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <p className="text-xs font-semibold text-gray-600 mb-1">Context Instructions</p>
+                                {formData.realm_context ? (
+                                    <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">
+                                        {formData.realm_context}
+                                    </pre>
+                                ) : (
+                                    <p className="text-gray-500 text-sm italic">No realm context configured.</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </Card>
+
             {/* Auto-analyze Card */}
             <Card>
                 <div className="p-6">

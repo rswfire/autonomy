@@ -15,3 +15,28 @@ export type RealmComplete = Realm & {
     clusters: Cluster[]
     synthesis: Synthesis[]
 }
+
+// Realm Settings Types
+export interface LlmAccount {
+    id: string
+    name: string
+    provider: 'claude' | 'openai' | 'local'
+    api_key: string
+    model: string
+    enabled: boolean
+}
+
+export interface RealmLlmSettings {
+    accounts: LlmAccount[]
+    default_account_id: string | null
+    auto_analyze: boolean
+    realm_context?: string
+    realm_holder_name?: string
+}
+
+export interface RealmSettings {
+    llm?: RealmLlmSettings
+    sanctum?: any
+    theme?: any
+    features?: any
+}

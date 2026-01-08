@@ -1,29 +1,7 @@
 // lib/utils/realm-settings.ts
-
-import { prisma } from '@/lib/db'
-import { randomBytes } from 'crypto'
-
-export interface LlmAccount {
-    id: string
-    name: string
-    provider: 'claude' | 'openai' | 'local'
-    api_key: string
-    model: string
-    enabled: boolean
-}
-
-export interface RealmLlmSettings {
-    accounts: LlmAccount[]
-    default_account_id: string | null
-    auto_analyze: boolean
-}
-
-export interface RealmSettings {
-    llm?: RealmLlmSettings
-    sanctum?: any
-    theme?: any
-    features?: any
-}
+import {prisma} from "@/lib/db";
+import type {LlmAccount, RealmLlmSettings, RealmSettings} from "@/lib/types/realm";
+import {ulid} from "@/lib/utils/ulid";
 
 /**
  * Load realm settings from database
@@ -84,7 +62,7 @@ export async function updateRealmLlmSettings(
  * Generate unique LLM account ID
  */
 export function generateLlmAccountId(): string {
-    return `llm_${randomBytes(8).toString('hex')}`
+    return ulid()
 }
 
 /**

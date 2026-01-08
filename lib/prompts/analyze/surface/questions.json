@@ -5,13 +5,13 @@
 
   "environment": "What is the physical or digital environment of this signal? Describe the setting, location, or context in which it emerged. Be factual and concise.",
 
-  "temperature": "Rate the intensity or volatility of this signal on a scale from 0.0 to 1.0, where 0.0 is calm/stable and 1.0 is highly charged/volatile. Consider emotional intensity, urgency, and energetic pressure. Return only the number.",
+  "temperature": "Rate the signal's energetic charge on a scale from -1.0 to 1.0, where -1.0 is depleted/exhausted, 0.0 is steady/methodical, and 1.0 is highly activated/pressured. This measures energetic state, not emotional content. Reflective processing at steady pace = 0.0. Urgent action under constraint = 0.7+. Return only the number in 0.1 increments.",
 
-  "density": "Rate the information density of this signal on a scale from 0.0 to 1.0, where 0.0 is sparse/meandering and 1.0 is highly compressed/packed with meaning. Return only the number.",
+  "density": "Rate how much ground this signal covers on a scale from -1.0 to 1.0, where -1.0 is highly focused on single point, 0.0 is conversational range, and 1.0 is rapidly traversing multiple domains. This measures scope and compression, not importance. Single-topic discussion = -0.3 to 0.3. Touching many systems/timeframes = 0.7+. Return only the number in 0.1 increments.",
 
-  "actions": "List specific, concrete actions described or shown in this signal. Use short phrases (e.g., 'walked to the beach', 'configured server', 'called friend'). If no actions are present, return empty array.",
+  "actions": "List actions in this signal across three temporal layers. Return as object with three arrays: 'performed' (actions taken during signal creation), 'referenced' (past actions described or discussed), 'planned' (future actions or intentions stated). Use short phrases for each action. If a temporal layer has no actions, use empty array.",
 
-  "entities": "List named entities referenced in this signal. For each, provide: name (the entity name), type (people/animals/places/infrastructure/organizations/concepts/media), and context (brief description of their role or relevance). Return as array of objects with this exact structure: {\"name\": \"...\", \"type\": \"people|animals|places|infrastructure|organizations|concepts|media\", \"context\": \"...\"}. If none, return empty array.",
+  "entities": "List named entities referenced in this signal. For each, provide: name (the entity name), type (beings/places/systems/concepts/media), and context (brief description of their role or relevance). Return as array of objects with this exact structure: {\"name\": \"...\", \"type\": \"beings|places|systems|concepts|media\", \"context\": \"...\"}. If none, return empty array.",
 
   "tags": "List 3-7 surface-level semantic tags relevant to this signal (e.g., 'infrastructure work', 'financial planning', 'coastal walk', 'system design'). Return as array of short phrases."
 }

@@ -214,8 +214,10 @@ export default function AnalysisPage() {
                         </tr>
                         <tr>
                             <td className="px-6 py-4 font-mono text-blue-600">signal_actions</td>
-                            <td className="px-6 py-4 text-gray-600">array</td>
-                            <td className="px-6 py-4 text-gray-700">Concrete actions described in signal</td>
+                            <td className="px-6 py-4 text-gray-600">object</td>
+                            <td className="px-6 py-4 text-gray-700">
+                                Actions across temporal layers: performed (during signal), referenced (past actions discussed), planned (future intentions)
+                            </td>
                         </tr>
                         <tr>
                             <td className="px-6 py-4 font-mono text-blue-600">signal_entities</td>
@@ -278,7 +280,9 @@ export default function AnalysisPage() {
                         <tr>
                             <td className="px-6 py-4 font-mono text-blue-600">signal_subsystems</td>
                             <td className="px-6 py-4 text-gray-600">array</td>
-                            <td className="px-6 py-4 text-gray-700">Engaged subsystems (cognitive, ethical, somatic, infrastructural, etc.)</td>
+                            <td className="px-6 py-4 text-gray-700">
+                                Engaged subsystems with contextual role (e.g., 'financial (constraint boundary)', 'relational (functional contrast)')
+                            </td>
                         </tr>
                         <tr>
                             <td className="px-6 py-4 font-mono text-blue-600">signal_dominant_language</td>

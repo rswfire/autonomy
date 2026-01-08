@@ -46,7 +46,9 @@ function parseTagsField(tags: any): string[] {
 function flattenAnalysisFields(values: any) {
     return {
         // Surface layer
-        signal_actions: values.signal_actions ? values.signal_actions.join(', ') : '',
+        signal_actions: values.signal_actions
+            ? JSON.stringify(values.signal_actions)
+            : '',
         signal_environment: values.signal_environment || '',
         signal_entities_people: values.signal_entities?.people?.join(', ') || '',
         signal_entities_animals: values.signal_entities?.animals?.join(', ') || '',

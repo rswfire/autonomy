@@ -21,6 +21,7 @@ export default async function RealmLlmPage({ params }: { params: Promise<{ id: s
         accounts: settings.llm?.accounts || [],
         default_account_id: settings.llm?.default_account_id || null,
         auto_analyze: settings.llm?.auto_analyze || false,
+        realm_holder_name: settings.llm?.realm_holder_name || '',
     }
 
     return (

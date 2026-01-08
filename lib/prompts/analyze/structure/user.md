@@ -1,10 +1,8 @@
 ## SIGNAL
 
 **Type:** {{signal_type}}  
-**Title:** {{signal_title}}  
 **Context:** {{signal_context}}  
 **Date:** {{signal_date}}  
-**Summary:** {{signal_summary}}
 {{signal_annotations}}
 
 ---
@@ -43,7 +41,7 @@ Return only a JSON object with the following structure:
   "substrate": "...",
   "ontological_states": ["value1", "value2", ...],
   "symbolic_elements": ["value1", "value2", ...],
-  "subsystems": ["value1", "value2", ...],
+  "subsystems": ["subsystem (role)", "subsystem (role)", ...],
   "dominant_language": ["value1", "value2", ...]
 }
 ```

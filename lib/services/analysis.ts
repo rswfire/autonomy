@@ -60,24 +60,24 @@ export class AnalysisService {
             // Build signal context
             const signalContext = this.buildSignalContext(signal)
             const annotations = signal.signal_annotations?.user_notes?.length > 0
-                ? `\n**Annotations:**\n${signal.signal_annotations.user_notes.map((note: any) =>
+                ? `\n*User notes about this signal (high-priority context):*\n${signal.signal_annotations.user_notes.map((note: any) =>
                     `- ${note.note} (${new Date(note.timestamp).toLocaleDateString()})`
-                ).join('\n')}\n\n*These are notes from the realm holder about this specific signal. Treat them as high-priority context.*\n`
+                ).join('\n')}\n`
                 : ''
 
             // Build surface prompts
             const surfaceSystemPrompt = [
                 invocation,
-                realmPrompt.replace('{{realm_context}}', realmContext),
+                realmPrompt
+                    .replace('{{realm_context}}', realmContext)
+                    .replace('{{realm_holder_name}}', settings.realm_holder_name || 'the realm holder'),
                 surfaceSystem
             ].join('\n\n')
 
             const surfaceUserPrompt = surfaceUser
                 .replace('{{signal_type}}', signal.signal_type)
-                .replace('{{signal_title}}', signal.signal_title)
                 .replace('{{signal_context}}', signal.signal_context || 'CAPTURE')
                 .replace('{{signal_date}}', signal.stamp_created?.toISOString() || new Date().toISOString())
-                .replace('{{signal_summary}}', signal.signal_summary || '')
                 .replace('{{signal_annotations}}', annotations)
                 .replace('{{signal_content}}', signalContext)
                 .replace('{{questions}}', this.formatQuestions(surfaceQuestions))
@@ -117,16 +117,16 @@ export class AnalysisService {
             // Build structure prompts
             const structureSystemPrompt = [
                 invocation,
-                realmPrompt.replace('{{realm_context}}', realmContext),
+                realmPrompt
+                    .replace('{{realm_context}}', realmContext)
+                    .replace('{{realm_holder_name}}', settings.realm_holder_name || 'the realm holder'),
                 structureSystem
             ].join('\n\n')
 
             const structureUserPrompt = structureUser
                 .replace('{{signal_type}}', signal.signal_type)
-                .replace('{{signal_title}}', signal.signal_title)
                 .replace('{{signal_context}}', signal.signal_context || 'CAPTURE')
                 .replace('{{signal_date}}', signal.stamp_created?.toISOString() || new Date().toISOString())
-                .replace('{{signal_summary}}', signal.signal_summary || '')
                 .replace('{{signal_annotations}}', annotations)
                 .replace('{{signal_content}}', signalContext)
                 .replace('{{questions}}', this.formatQuestions(structureQuestions))
