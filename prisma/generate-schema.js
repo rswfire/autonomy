@@ -53,7 +53,7 @@ model Realm {
   members  RealmUser[]
   signals  Signal[]
   clusters Cluster[]
-  synthesis Synthesis[]
+  reflections Reflection[]
 
   @@map("realms")
   @@index([realm_type], map: "idx_realm_realm-type")
@@ -140,7 +140,6 @@ model Signal {
   stamp_updated   DateTime?  @updatedAt
   stamp_imported  DateTime?
 
-  synthesis    Synthesis[]      @relation("SynthesisToSignal")
   clusters     ClusterSignal[]
 
   @@map("signals")
@@ -200,7 +199,6 @@ model Cluster {
   child_clusters     Cluster[]  @relation("ClusterHierarchy")
 
   signals    ClusterSignal[]
-  synthesis  Synthesis[] @relation("SynthesisToCluster")
 
   @@map("clusters")
   @@index([realm_id], map: "idx_cluster_realm-id")
@@ -236,52 +234,48 @@ model ClusterSignal {
 
 
 //
-// SYNTHESIS -- AI EXTRACTION LAYER
+// REFLECTION -- AI-GENERATED NARRATIVE INSIGHTS ON SIGNALS AND CLUSTERS
 //
 
-model Synthesis {
+model Reflection {
+  reflection_id       String   @id @db.VarChar(26)
+  realm_id            String   @db.VarChar(26)
+  realm               Realm    @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
 
-  synthesis_id       String   @id @db.VarChar(26)
-  realm_id           String   @db.VarChar(26)
-  realm              Realm    @relation(fields: [realm_id], references: [realm_id], onDelete: Cascade)
+  reflection_type     String   @db.VarChar(50)  // MIRROR | MYTH | NARRATIVE
+  reflection_source   String?  @db.VarChar(100) // LLM account identifier
+  reflection_depth    Int      @default(0)      // Hierarchy level if applicable
 
-  synthesis_type     String   @db.VarChar(50)  // METADATA | REFLECTION
-  synthesis_subtype  String   @db.VarChar(50)  // SURFACE, STRUCTURE, PATTERNS | MIRROR, MYTH, NARRATIVE
-  synthesis_source   String?  @db.VarChar(100)
-  synthesis_depth    Int      @default(0)
+  // Polymorphic relation - can point to Signal OR Cluster
+  polymorphic_id      String   @db.VarChar(26)
+  polymorphic_type    String   @db.VarChar(50)  // "signal" or "cluster"
 
-  polymorphic_id    String   @db.VarChar(26)
-  polymorphic_type  String  @db.VarChar(50)
+  // Content - the actual reflection text
+  reflection_content      String?  @db.Text  // The generated narrative/story
 
-  signal   Signal?   @relation("SynthesisToSignal", fields: [polymorphic_id], references: [signal_id], onDelete: Cascade, map: "fkey_synthesis_signal-id")
-  cluster  Cluster?  @relation("SynthesisToCluster", fields: [polymorphic_id], references: [cluster_id], onDelete: Cascade, map: "fkey_synthesis_cluster-id")
-
-  synthesis_annotations  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  synthesis_history      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  synthesis_errors       Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
-  synthesis_content      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}
+  // Metadata and tracking
+  reflection_annotations  Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}  // User notes and feedback
+  reflection_history      Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}  // Generation logs, edits
+  reflection_errors       Json?  ${isPostgres ? '@db.JsonB' : '@db.Json'}  // Error tracking
 
   ${isPostgres
-    ? 'synthesis_embedding Unsupported("vector(1536)")?'
-    : 'synthesis_embedding Json? @db.Json'
+    ? 'reflection_embedding Unsupported("vector(1536)")?'
+    : 'reflection_embedding Json? @db.Json'
 }
 
   stamp_created  DateTime   @default(now())
   stamp_updated  DateTime?  @updatedAt
 
-  @@map("synthesis")
-  @@index([realm_id], map: "idx_synthesis_realm-id")
-  @@index([synthesis_type], map: "idx_synthesis_synthesis-type")
-  @@index([synthesis_subtype], map: "idx_synthesis_synthesis-subtype")
-  @@index([synthesis_type, synthesis_subtype], map: "idx_synthesis_synthesis-type_synthesis-subtype")
-  @@index([synthesis_source], map: "idx_synthesis_synthesis-source")
-  @@index([polymorphic_id], map: "idx_synthesis_polymorphic-id")
-  @@index([polymorphic_type], map: "idx_synthesis_polymorphic-type")
-  @@index([polymorphic_id, polymorphic_type], map: "idx_synthesis_polymorphic-id_synthesis_polymorphic-type")
-  @@index([stamp_created], map: "idx_synthesis_stamp_created")
-
+  @@map("reflections")
+  @@index([realm_id], map: "idx_reflection_realm-id")
+  @@index([reflection_type], map: "idx_reflection_reflection-type")
+  @@index([reflection_source], map: "idx_reflection_reflection-source")
+  @@index([reflection_depth], map: "idx_reflection_reflection-depth")
+  @@index([polymorphic_id], map: "idx_reflection_polymorphic-id")
+  @@index([polymorphic_type], map: "idx_reflection_polymorphic-type")
+  @@index([polymorphic_id, polymorphic_type], map: "idx_reflection_polymorphic-id_reflection_polymorphic-type")
+  @@index([stamp_created], map: "idx_reflection_stamp-created")
 }
-
 
 //
 // USER

@@ -4,8 +4,8 @@ import { prisma } from '../db'
 import type {
     Cluster,
     ClusterWithSignals,
-    ClusterWithSynthesis,
     ClusterWithHierarchy,
+    ClusterWithReflections,
     ClusterComplete,
 } from '../types'
 import type {
@@ -67,7 +67,7 @@ export async function getClusterById(
         include_synthesis?: boolean
         include_hierarchy?: boolean
     }
-): Promise<Cluster | ClusterWithSignals | ClusterWithSynthesis | ClusterComplete | null> {
+): Promise<Cluster | ClusterWithSignals | ClusterWithReflections | ClusterComplete | null> {
     const userRealmIds = await getUserRealmIds(userId)
 
     const include: any = {}
@@ -524,7 +524,7 @@ export async function getClusterComplete(
 ): Promise<ClusterComplete | null> {
     const userRealmIds = await getUserRealmIds(userId)
 
-    return await prisma.cluster.findFirst({
+    const cluster = await prisma.cluster.findFirst({
         where: {
             cluster_id,
             realm_id: { in: userRealmIds },
@@ -534,13 +534,44 @@ export async function getClusterComplete(
                 include: {
                     signal: true,
                 },
-                orderBy: {
-                    pivot_position: 'asc',
-                },
             },
-            synthesis: true,
             parent_cluster: true,
             child_clusters: true,
         },
     })
+
+    return cluster as ClusterComplete | null
+}
+
+/**
+ * Get cluster with reflections
+ */
+export async function getClusterWithReflections(
+    cluster_id: string,
+    userId: string
+): Promise<ClusterWithReflections | null> {
+    const userRealmIds = await getUserRealmIds(userId)
+
+    const cluster = await prisma.cluster.findFirst({
+        where: {
+            cluster_id,
+            realm_id: { in: userRealmIds },
+        },
+    })
+
+    if (!cluster) return null
+
+    // Query reflections separately (no Prisma relation)
+    const reflections = await prisma.reflection.findMany({
+        where: {
+            polymorphic_id: cluster_id,
+            polymorphic_type: 'cluster',
+        },
+        orderBy: { stamp_created: 'desc' },
+    })
+
+    return {
+        ...cluster,
+        reflections,
+    } as ClusterWithReflections
 }

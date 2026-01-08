@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { requireAuth } from '@/lib/utils/auth'
 import { querySignals } from '@/lib/queries/signal'
 import { queryClusters } from '@/lib/queries/cluster'
-import { querySynthesis } from '@/lib/queries/synthesis'
 import { listUsers } from '@/lib/queries/user'
 import { getUserRealms } from '@/lib/queries/realm'
 import Icon from '@/components/Icon'
@@ -15,10 +14,9 @@ export default async function AdminDashboard() {
     const user = await requireAuth()
 
     // Get counts
-    const [signalsData, clustersData, synthesisData, usersData, realmsData] = await Promise.all([
+    const [signalsData, clustersData, usersData, realmsData] = await Promise.all([
         querySignals({ limit: 1, offset: 0, sort_order: 'desc' }, user.user_id),
         queryClusters({ limit: 1, offset: 0, sort_order: 'desc' }, user.user_id),
-        querySynthesis({ limit: 1, offset: 0, sort_order: 'desc' }, user.user_id),
         listUsers({ limit: 1, offset: 0 }),
         getUserRealms({ userId: user.user_id }),
     ])
@@ -49,14 +47,6 @@ export default async function AdminDashboard() {
             description: 'Grouped signal collections',
         },
         {
-            name: 'Synthesis',
-            count: synthesisData.total,
-            href: '/admin/synthesis',
-            icon: 'SquareAsterisk' as const,
-            color: 'bg-indigo-500',
-            description: 'AI-generated insights',
-        },
-        {
             name: 'Users',
             count: usersData.length,
             href: '/admin/users',
@@ -77,7 +67,7 @@ export default async function AdminDashboard() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {stats.map((stat) => (
                     <Link
                         key={stat.name}
@@ -143,19 +133,6 @@ export default async function AdminDashboard() {
                         </Link>
 
                         <Link
-                            href="/admin/synthesis/new"
-                            className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
-                        >
-                            <div className="flex items-center">
-                                <Icon name="Plus" size={20} className="text-gray-400 group-hover:text-teal-600" />
-                                <span className="ml-3 text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                                    Create Synthesis
-                                </span>
-                            </div>
-                            <Icon name="ChevronRight" size={16} className="text-gray-400" />
-                        </Link>
-
-                        <Link
                             href="/admin/users/new"
                             className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
                         >
@@ -187,7 +164,7 @@ export default async function AdminDashboard() {
                         <div className="flex items-center justify-between py-2 border-b border-gray-100">
                             <span className="text-sm text-gray-600">Total Records</span>
                             <span className="text-sm font-medium text-gray-900">
-                                {signalsData.total + clustersData.total + synthesisData.total}
+                                {signalsData.total + clustersData.total}
                             </span>
                         </div>
                         <div className="flex items-center justify-between py-2">

@@ -28,6 +28,8 @@ Answer the following questions about the structural architecture of this signal.
 
 {{questions}}
 
+**Only answer the questions listed above. Do not include any other fields in your response.**
+
 ---
 
 ## RESPONSE FORMAT

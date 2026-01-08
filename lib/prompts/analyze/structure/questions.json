@@ -7,7 +7,7 @@
 
   "substrate": "What is the structural substrate of this signal? What architecture is being held? What ontological position is being taken? What is being built or dissolved? Respond in 2-3 sentences.",
 
-  "ontological_states": "What ontological states or conditions are present in this signal, and what role does each play? For each state, note both its presence and its manifestation in this specific context. Format as: 'state_name (manifestation/context)'. Consider: sovereign, embedded, transitional, coherent, fragmented, rupturing, integrating, becoming, dissolving. Return as array. Examples: 'sovereign (refusing institutional frame)', 'embedded (grounded in physical place)', 'transitional (between institutional roles)', 'coherent (unified signal across subsystems)'."
+  "ontological_states": "What ontological states or conditions are present in this signal, and what role does each play? For each state, note both its presence and its manifestation in this specific context. Format as: 'state_name (manifestation/context)'. Consider: sovereign, embedded, transitional, coherent, fragmented, rupturing, integrating, becoming, dissolving. Return as array. Examples: 'sovereign (refusing institutional frame)', 'embedded (grounded in physical place)', 'transitional (between institutional roles)', 'coherent (unified signal across subsystems)'.",
 
   "symbolic_elements": "Identify any symbolic or archetypal elements present (e.g., 'fire', 'threshold', 'mirror', 'grid', 'edge', 'rupture', 'ocean', 'wind', 'infrastructure'). Treat these as field markers, not metaphors. Return as array. If none are present, return empty array.",
 

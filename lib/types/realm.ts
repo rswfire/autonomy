@@ -1,5 +1,5 @@
 // lib/types/realm.ts
-import type { Realm, RealmUser, Signal, Cluster, Synthesis } from '@prisma/client'
+import type { Realm, RealmUser, Signal, Cluster, Reflection } from '@prisma/client'
 
 export type RealmWithMembers = Realm & {
     members: RealmUser[]
@@ -9,11 +9,15 @@ export type RealmWithSignals = Realm & {
     signals: Signal[]
 }
 
+export type RealmWithReflections = Realm & {
+    reflections: Reflection[]
+}
+
 export type RealmComplete = Realm & {
     members: RealmUser[]
     signals: Signal[]
     clusters: Cluster[]
-    synthesis: Synthesis[]
+    reflections: Reflection[]
 }
 
 // Realm Settings Types

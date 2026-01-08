@@ -15,6 +15,8 @@ Answer the following questions about this signal. Return your response as valid 
 
 {{questions}}
 
+**Only answer the questions listed above. Do not include any other fields in your response.**
+
 ---
 
 ## RESPONSE FORMAT

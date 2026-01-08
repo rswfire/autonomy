@@ -1,7 +1,6 @@
 // app/api/admin/signals/[id]/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import {requireAuthAPI} from '@/lib/utils/auth'
-import { prisma } from '@/lib/db'
+import { requireAuthAPI } from '@/lib/utils/auth'
 import { AnalysisService } from '@/lib/services/analysis'
 
 export async function POST(
@@ -10,50 +9,29 @@ export async function POST(
 ) {
     try {
         const user = await requireAuthAPI()
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        const { id: signalId } = await params
+        const { realm_id, fields } = await req.json()
+
+        if (!Array.isArray(fields) || fields.length === 0) {
+            return NextResponse.json(
+                { error: 'fields array required' },
+                { status: 400 }
+            )
         }
 
-        const { id } = await params
-
-        // Get signal and verify ownership
-        const signal = await prisma.signal.findUnique({
-            where: { signal_id: id },
-            include: { realm: true },
-        })
-
-        if (!signal) {
-            return NextResponse.json({ error: 'Signal not found' }, { status: 404 })
-        }
-
-        if (signal.realm.user_id !== user.user_id) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-        }
-
-        // Run analysis
         const analysisService = new AnalysisService()
-        const fields = await analysisService.analyze(signal, signal.realm_id)
+        const result = await analysisService.analyzeSelective(signalId, realm_id, fields)
 
-        if (!fields) {
-            return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
+        if (!result) {
+            return NextResponse.json(
+                { error: 'Analysis failed' },
+                { status: 500 }
+            )
         }
 
-        // Update signal with analysis results
-        const cleanFields = Object.fromEntries(
-            Object.entries(fields).filter(([_, v]) => v !== null)
-        )
-
-        const updated = await prisma.signal.update({
-            where: { signal_id: id },
-            data: cleanFields,
-        })
-
-        return NextResponse.json({
-            success: true,
-            fields: Object.keys(fields),
-        })
+        return NextResponse.json({ success: true })
     } catch (error) {
-        console.error('Analysis API error:', error)
+        console.error('Analysis error:', error)
         return NextResponse.json(
             { error: 'Analysis failed' },
             { status: 500 }

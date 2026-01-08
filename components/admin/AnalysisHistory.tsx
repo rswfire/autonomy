@@ -20,6 +20,8 @@ interface HistoryEntry {
 export function AnalysisHistory({ history }: { history: any[] }) {
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
     const [activeTabs, setActiveTabs] = useState<{ [key: string]: 'response' | 'user_prompt' | 'system_prompt' }>({})
+    const [currentPage, setCurrentPage] = useState(0)
+    const itemsPerPage = 3
 
     if (!history || history.length === 0) {
         return (
@@ -32,7 +34,10 @@ export function AnalysisHistory({ history }: { history: any[] }) {
     }
 
     const analysisEntries = history.filter((entry: any) =>
-        entry.type === 'analysis_surface' || entry.type === 'analysis_structure'
+        entry.type === 'analysis_surface' ||
+        entry.type === 'analysis_structure' ||
+        entry.type === 'analysis_surface_selective' ||
+        entry.type === 'analysis_structure_selective'
     ).reverse()
 
     const groupedEntries: { [key: string]: HistoryEntry[] } = {}
@@ -44,9 +49,46 @@ export function AnalysisHistory({ history }: { history: any[] }) {
         groupedEntries[timestamp].push(entry)
     })
 
+    const groupedArray = Object.entries(groupedEntries)
+    const totalPages = Math.ceil(groupedArray.length / itemsPerPage)
+    const paginatedGroups = groupedArray.slice(
+        currentPage * itemsPerPage,
+        (currentPage + 1) * itemsPerPage
+    )
+
     return (
         <div className="space-y-4">
-            {Object.entries(groupedEntries).map(([timestamp, groupEntries], groupIndex) => {
+            {/* Pagination controls - top */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between px-2">
+                    <div className="text-sm text-gray-600">
+                        Showing {currentPage * itemsPerPage + 1}-{Math.min((currentPage + 1) * itemsPerPage, groupedArray.length)} of {groupedArray.length}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                            disabled={currentPage === 0}
+                            className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <span className="text-sm text-gray-600">
+                            Page {currentPage + 1} of {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                            disabled={currentPage === totalPages - 1}
+                            className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Analysis entries */}
+            {paginatedGroups.map(([timestamp, groupEntries], groupIndex) => {
+                const actualIndex = currentPage * itemsPerPage + groupIndex
                 const hasError = groupEntries.some(e => e.error)
                 const totalTokens = groupEntries.reduce((sum, e) => sum + (e.tokens || 0), 0)
                 const allFieldsUpdated = groupEntries.flatMap(e => e.fields_updated || [])
@@ -55,7 +97,7 @@ export function AnalysisHistory({ history }: { history: any[] }) {
                     <div key={timestamp} className="bg-white border-2 border-gray-200 rounded-lg overflow-hidden">
                         <button
                             type="button"
-                            onClick={() => setExpandedIndex(expandedIndex === groupIndex ? null : groupIndex)}
+                            onClick={() => setExpandedIndex(expandedIndex === actualIndex ? null : actualIndex)}
                             className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
                             <div className="flex items-center gap-4">
@@ -68,7 +110,7 @@ export function AnalysisHistory({ history }: { history: any[] }) {
                                 </div>
                                 <div className="text-left">
                                     <div className="text-sm font-semibold text-gray-900">
-                                        Analysis Run #{Object.keys(groupedEntries).length - groupIndex}
+                                        Analysis Run #{groupedArray.length - actualIndex}
                                     </div>
                                     <div className="text-xs text-gray-500 space-x-3 mt-0.5">
                                         <span>{new Date(timestamp).toLocaleString()}</span>
@@ -98,14 +140,14 @@ export function AnalysisHistory({ history }: { history: any[] }) {
                                     </span>
                                 )}
                                 <Icon
-                                    name={expandedIndex === groupIndex ? 'ChevronUp' : 'ChevronDown'}
+                                    name={expandedIndex === actualIndex ? 'ChevronUp' : 'ChevronDown'}
                                     size={20}
                                     className="text-gray-400"
                                 />
                             </div>
                         </button>
 
-                        {expandedIndex === groupIndex && (
+                        {expandedIndex === actualIndex && (
                             <div className="border-t border-gray-200">
                                 {groupEntries.map((entry, entryIndex) => {
                                     const tabKey = `${timestamp}-${entryIndex}`
@@ -116,12 +158,15 @@ export function AnalysisHistory({ history }: { history: any[] }) {
                                             <div className="bg-gray-50 px-5 py-3 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Icon
-                                                        name={entry.type === 'analysis_surface' ? 'FileText' : 'Layers'}
+                                                        name={entry.type.includes('surface') ? 'FileText' : 'Layers'}
                                                         size={16}
                                                         className="text-gray-500"
                                                     />
                                                     <span className="text-sm font-medium text-gray-700">
-                                                        {entry.type === 'analysis_surface' ? 'Surface Analysis' : 'Structure Analysis'}
+                                                        {entry.type.includes('surface') ? 'Surface Analysis' : 'Structure Analysis'}
+                                                        {entry.type.includes('selective') && (
+                                                            <span className="ml-2 text-xs text-gray-500">(Selective)</span>
+                                                        )}
                                                     </span>
                                                 </div>
                                                 {entry.tokens && (
@@ -180,28 +225,32 @@ export function AnalysisHistory({ history }: { history: any[] }) {
                                                             >
                                                                 Response
                                                             </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setActiveTabs({ ...activeTabs, [tabKey]: 'user_prompt' })}
-                                                                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                                                    currentTab === 'user_prompt'
-                                                                        ? 'text-teal-700 border-b-2 border-teal-700'
-                                                                        : 'text-gray-500 hover:text-gray-700'
-                                                                }`}
-                                                            >
-                                                                Input
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setActiveTabs({ ...activeTabs, [tabKey]: 'system_prompt' })}
-                                                                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                                                                    currentTab === 'system_prompt'
-                                                                        ? 'text-teal-700 border-b-2 border-teal-700'
-                                                                        : 'text-gray-500 hover:text-gray-700'
-                                                                }`}
-                                                            >
-                                                                System Prompt
-                                                            </button>
+                                                            {entry.user_prompt && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setActiveTabs({ ...activeTabs, [tabKey]: 'user_prompt' })}
+                                                                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                                                        currentTab === 'user_prompt'
+                                                                            ? 'text-teal-700 border-b-2 border-teal-700'
+                                                                            : 'text-gray-500 hover:text-gray-700'
+                                                                    }`}
+                                                                >
+                                                                    Input
+                                                                </button>
+                                                            )}
+                                                            {entry.system_prompt && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setActiveTabs({ ...activeTabs, [tabKey]: 'system_prompt' })}
+                                                                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                                                        currentTab === 'system_prompt'
+                                                                            ? 'text-teal-700 border-b-2 border-teal-700'
+                                                                            : 'text-gray-500 hover:text-gray-700'
+                                                                    }`}
+                                                                >
+                                                                    System Prompt
+                                                                </button>
+                                                            )}
                                                         </div>
 
                                                         <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
@@ -232,6 +281,31 @@ export function AnalysisHistory({ history }: { history: any[] }) {
                     </div>
                 )
             })}
+
+            {/* Pagination controls - bottom */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-2">
+                    <button
+                        type="button"
+                        onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                        disabled={currentPage === 0}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm text-gray-600">
+                        Page {currentPage + 1} of {totalPages}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                        disabled={currentPage === totalPages - 1}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
         </div>
     )
 }

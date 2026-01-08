@@ -1,5 +1,5 @@
 // lib/types/cluster.ts
-import type { Cluster, ClusterSignal, Signal, Synthesis } from '@prisma/client'
+import type { Cluster, ClusterSignal, Signal, Reflection } from '@prisma/client'
 
 export type ClusterMetadata = Record<string, unknown>
 export type ClusterPayload = Record<string, unknown>
@@ -12,20 +12,20 @@ export type ClusterWithSignals = Cluster & {
     })[]
 }
 
-export type ClusterWithSynthesis = Cluster & {
-    synthesis: Synthesis[]
-}
-
 export type ClusterWithHierarchy = Cluster & {
     parent_cluster: Cluster | null
     child_clusters: Cluster[]
+}
+
+export type ClusterWithReflections = Cluster & {
+    reflections: Reflection[]
 }
 
 export type ClusterComplete = Cluster & {
     signals: (ClusterSignal & {
         signal: Signal
     })[]
-    synthesis: Synthesis[]
+    reflections: Reflection[]
     parent_cluster: Cluster | null
     child_clusters: Cluster[]
 }

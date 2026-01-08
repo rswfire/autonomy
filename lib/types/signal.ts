@@ -1,10 +1,10 @@
 // lib/types/signal.ts
-import type { Signal, Synthesis, ClusterSignal, Cluster } from "@prisma/client"
+import type { Signal, Reflection, ClusterSignal, Cluster } from "@prisma/client"
 
 // Relations
 
 export type SignalComplete = Signal & {
-    synthesis: Synthesis[]
+    reflections: Reflection[]
     clusters: (ClusterSignal & {
         cluster: Cluster
     })[]
@@ -16,8 +16,8 @@ export type SignalWithClusters = Signal & {
     })[]
 }
 
-export type SignalWithSynthesis = Signal & {
-    synthesis: Synthesis[]
+export type SignalWithReflections = Signal & {
+    reflections: Reflection[]
 }
 
 // Definitions
@@ -28,11 +28,10 @@ export type SignalAnnotations = {
         note: string
         user_id: string
     }>
-    synthesis_feedback?: Array<{
+    reflection_feedback?: Array<{
         timestamp: string
         feedback: string
-        synthesis_type: string
-        synthesis_subtype: string
+        reflection_type: string
         user_id: string
     }>
 }
@@ -52,9 +51,9 @@ export type SignalHistory = Array<{
     model?: string
     fields_changed: string[]
     previous_values: Record<string, unknown>
-    trigger: "creation" | "user_edit" | "user_annotation" | "re_synthesis" | "manual_override"
+    trigger: "creation" | "user_edit" | "user_annotation" | "re_analysis" | "manual_override"
     user_id?: string
-    synthesis_id?: string
+    reflection_id?: string
 }>
 
 export type SignalMetadata = Record<string, unknown>

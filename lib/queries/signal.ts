@@ -3,9 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../db'
 import type {
     Signal,
-    SignalWithSynthesis,
     SignalWithClusters,
-    SignalComplete,
 } from '../types'
 import type {
     CreateSignalInput,
@@ -79,7 +77,7 @@ export async function createSignal(
             ...(signal_payload && { signal_payload: signal_payload as Prisma.InputJsonValue }),
             ...(signal_tags && { signal_tags: signal_tags as Prisma.InputJsonValue }),
             signal_history,
-            ...(stamp_created && { stamp_created }),  // Add this line
+            ...(stamp_created && { stamp_created }),
             ...(stamp_imported && { stamp_imported }),
         },
     })
@@ -92,14 +90,12 @@ export async function getSignalById(
     signal_id: string,
     userId: string,
     options?: {
-        include_synthesis?: boolean
         include_clusters?: boolean
     }
-): Promise<Signal | SignalWithSynthesis | SignalWithClusters | SignalComplete | null> {
+): Promise<Signal | SignalWithClusters | null> {
     const userRealmIds = await getUserRealmIds(userId)
 
     const include = {
-        synthesis: options?.include_synthesis ?? false,
         clusters: options?.include_clusters
             ? {
                 include: {
@@ -203,7 +199,7 @@ export async function updateSignal(
         where: { signal_id },
         data: {
             ...rest,
-            ...geoData,  // Only has data for MySQL
+            ...geoData,
             ...(signal_metadata !== undefined && { signal_metadata: signal_metadata as Prisma.InputJsonValue }),
             ...(signal_payload !== undefined && { signal_payload: signal_payload as Prisma.InputJsonValue }),
             ...(signal_tags !== undefined && { signal_tags: signal_tags as Prisma.InputJsonValue }),
@@ -560,12 +556,12 @@ export async function countSignalsByContext(
 }
 
 /**
- * Get signal with full relations (realm-scoped)
+ * Get signal with clusters (realm-scoped)
  */
 export async function getSignalComplete(
     signal_id: string,
     userId: string
-): Promise<SignalComplete | null> {
+): Promise<Signal | null> {
     const userRealmIds = await getUserRealmIds(userId)
 
     return await prisma.signal.findFirst({
@@ -574,7 +570,6 @@ export async function getSignalComplete(
             realm_id: { in: userRealmIds },
         },
         include: {
-            synthesis: true,
             clusters: {
                 include: {
                     cluster: true,
@@ -629,7 +624,7 @@ export async function getSignalsByRealmSlug(
 export async function getSignalByIdAndRealmSlug(
     signalId: string,
     realmSlug: string
-): Promise<SignalComplete | null> {
+): Promise<Signal | null> {
     const realm = await prisma.realm.findUnique({
         where: { realm_slug: realmSlug },
     })
@@ -644,7 +639,6 @@ export async function getSignalByIdAndRealmSlug(
             realm_id: realm.realm_id,
         },
         include: {
-            synthesis: true,
             clusters: {
                 include: {
                     cluster: true,

@@ -4,6 +4,7 @@ import { getDefaultLlmAccount, getLlmAccount, getRealmLlmSettings } from '@/lib/
 import { prisma } from '@/lib/db'
 import fs from 'fs/promises'
 import path from 'path'
+import type { SignalAnnotations } from '@/lib/types/signal'
 
 interface AnalysisFields {
     signal_title?: string | null
@@ -183,6 +184,292 @@ export class AnalysisService {
         }
     }
 
+    // lib/services/analysis.ts
+
+    public async analyzeSelective(
+        signalId: string,
+        realmId: string,
+        fields: string[]
+    ): Promise<{ success: boolean; error?: string }> {
+        try {
+            console.log('Starting selective analysis:', { signalId, realmId, fields })
+
+            const signal = await prisma.signal.findUnique({
+                where: { signal_id: signalId },
+            })
+
+            if (!signal) {
+                await this.logAnalysisHistory(signalId, {
+                    type: 'analysis_selective_failed',
+                    timestamp: new Date().toISOString(),
+                    error: 'Signal not found',
+                    fields_requested: fields,
+                })
+                return { success: false, error: 'Signal not found' }
+            }
+
+            // Determine which layers are needed
+            const surfaceFields = [
+                'signal_title', 'signal_summary', 'signal_environment',
+                'signal_temperature', 'signal_density', 'signal_actions',
+                'signal_entities', 'signal_tags'
+            ]
+            const structureFields = [
+                'signal_energy', 'signal_state', 'signal_orientation',
+                'signal_substrate', 'signal_ontological_states',
+                'signal_symbolic_elements', 'signal_subsystems',
+                'signal_dominant_language'
+            ]
+
+            const needsSurface = fields.some(f => surfaceFields.includes(f))
+            const needsStructure = fields.some(f => structureFields.includes(f))
+
+            // Get LLM account
+            const account = await getDefaultLlmAccount(realmId)
+            if (!account || !account.enabled) {
+                await this.logAnalysisHistory(signal.signal_id, {
+                    type: 'analysis_selective_failed',
+                    timestamp: new Date().toISOString(),
+                    error: 'No enabled LLM account found',
+                    fields_requested: fields,
+                })
+                return { success: false, error: 'No enabled LLM account found' }
+            }
+
+            console.log('Using LLM account:', account.id, account.model)
+
+            // Load realm settings
+            const settings = await getRealmLlmSettings(realmId)
+            const realmContext = (settings as any)?.realm_context || ''
+
+            // Load prompts
+            const invocation = await this.loadPrompt('invocation.md')
+            const realmPrompt = await this.loadPrompt('realm.md')
+
+            const signalContext = this.buildSignalContext(signal)
+            const signalAnnotations = signal.signal_annotations as SignalAnnotations | null
+            const annotations = signalAnnotations?.user_notes && signalAnnotations.user_notes.length > 0
+                ? `\n*User notes about this signal (high-priority context):*\n${signalAnnotations.user_notes.map((note) =>
+                    `- ${note.note} (${new Date(note.timestamp).toLocaleDateString()})`
+                ).join('\n')}\n`
+                : ''
+
+            let analysisFields: any = {}
+
+            // Run surface analysis if needed
+            if (needsSurface) {
+                try {
+                    const surfaceSystem = await this.loadPrompt('surface/system.md')
+                    const surfaceUser = await this.loadPrompt('surface/user.md')
+                    const allQuestions = await this.loadQuestions('surface/questions.json')
+
+                    // Filter questions to only selected fields
+                    const filteredQuestions = this.filterQuestions(allQuestions, fields, surfaceFields)
+
+                    const surfaceSystemPrompt = [
+                        invocation,
+                        realmPrompt
+                            .replace('{{realm_context}}', realmContext)
+                            .replace('{{realm_holder_name}}', (settings as any)?.realm_holder_name || 'the realm holder'),
+                        surfaceSystem
+                    ].join('\n\n')
+
+                    const surfaceUserPrompt = surfaceUser
+                        .replace('{{signal_type}}', signal.signal_type)
+                        .replace('{{signal_title}}', signal.signal_title)
+                        .replace('{{signal_context}}', signal.signal_context || 'CAPTURE')
+                        .replace('{{signal_date}}', signal.stamp_created?.toISOString() || new Date().toISOString())
+                        .replace('{{signal_summary}}', signal.signal_summary || '')
+                        .replace('{{signal_annotations}}', annotations)
+                        .replace('{{signal_content}}', signalContext)
+                        .replace('{{questions}}', this.formatQuestions(filteredQuestions))
+
+                    const surfaceResponse = await this.router.generate(
+                        account,
+                        surfaceUserPrompt,
+                        surfaceSystemPrompt
+                    )
+
+                    const surfaceData = this.parseSurfaceResponse(surfaceResponse.content)
+
+                    // Only keep requested fields
+                    const filteredSurfaceFields = this.filterFields(surfaceData, fields)
+                    analysisFields = filteredSurfaceFields
+
+                    await this.logAnalysisHistory(signal.signal_id, {
+                        type: 'analysis_surface_selective',
+                        timestamp: new Date().toISOString(),
+                        account_id: account.id,
+                        model: account.model,
+                        system_prompt: surfaceSystemPrompt,  // ← ADD
+                        user_prompt: surfaceUserPrompt,      // ← ADD
+                        fields_requested: fields.filter(f => surfaceFields.includes(f)),
+                        fields_updated: Object.keys(filteredSurfaceFields),
+                        response: surfaceResponse.content,
+                        tokens: surfaceResponse.usage?.total_tokens || null,
+                    })
+                } catch (error) {
+                    await this.logAnalysisHistory(signal.signal_id, {
+                        type: 'analysis_surface_selective_failed',
+                        timestamp: new Date().toISOString(),
+                        account_id: account.id,
+                        model: account.model,
+                        error: error instanceof Error ? error.message : 'Surface analysis failed',
+                        fields_requested: fields.filter(f => surfaceFields.includes(f)),
+                    })
+                    throw error
+                }
+            }
+
+            // Run structure analysis if needed
+            if (needsStructure) {
+                try {
+                    const structureSystem = await this.loadPrompt('structure/system.md')
+                    const structureUser = await this.loadPrompt('structure/user.md')
+                    const allQuestions = await this.loadQuestions('structure/questions.json')
+
+                    // Filter questions to only selected fields
+                    const filteredQuestions = this.filterQuestions(allQuestions, fields, structureFields)
+
+                    const structureSystemPrompt = [
+                        invocation,
+                        realmPrompt
+                            .replace('{{realm_context}}', realmContext)
+                            .replace('{{realm_holder_name}}', (settings as any)?.realm_holder_name || 'the realm holder'),
+                        structureSystem
+                    ].join('\n\n')
+
+                    const structureUserPrompt = structureUser
+                        .replace('{{signal_type}}', signal.signal_type)
+                        .replace('{{signal_title}}', signal.signal_title)
+                        .replace('{{signal_context}}', signal.signal_context || 'CAPTURE')
+                        .replace('{{signal_date}}', signal.stamp_created?.toISOString() || new Date().toISOString())
+                        .replace('{{signal_summary}}', signal.signal_summary || '')
+                        .replace('{{signal_annotations}}', annotations)
+                        .replace('{{signal_content}}', signalContext)
+                        .replace('{{questions}}', this.formatQuestions(filteredQuestions))
+
+                    const structureResponse = await this.router.generate(
+                        account,
+                        structureUserPrompt,
+                        structureSystemPrompt
+                    )
+
+                    const structureData = this.parseStructureResponse(structureResponse.content)
+
+                    // Only keep requested fields
+                    const filteredStructureFields = this.filterFields(structureData, fields)
+                    analysisFields = {
+                        ...analysisFields,
+                        ...filteredStructureFields
+                    }
+
+                    await this.logAnalysisHistory(signal.signal_id, {
+                        type: 'analysis_structure_selective',
+                        timestamp: new Date().toISOString(),
+                        account_id: account.id,
+                        model: account.model,
+                        system_prompt: structureSystemPrompt,  // ← ADD
+                        user_prompt: structureUserPrompt,      // ← ADD
+                        fields_requested: fields.filter(f => structureFields.includes(f)),
+                        fields_updated: Object.keys(filteredStructureFields),
+                        response: structureResponse.content,
+                        tokens: structureResponse.usage?.total_tokens || null,
+                    })
+                } catch (error) {
+                    await this.logAnalysisHistory(signal.signal_id, {
+                        type: 'analysis_structure_selective_failed',
+                        timestamp: new Date().toISOString(),
+                        account_id: account.id,
+                        model: account.model,
+                        error: error instanceof Error ? error.message : 'Structure analysis failed',
+                        fields_requested: fields.filter(f => structureFields.includes(f)),
+                    })
+                    throw error
+                }
+            }
+
+            // Update signal with only the selected fields
+            await prisma.signal.update({
+                where: { signal_id: signalId },
+                data: analysisFields,
+            })
+
+            await this.logAnalysisHistory(signal.signal_id, {
+                type: 'analysis_selective_complete',
+                timestamp: new Date().toISOString(),
+                fields_updated: Object.keys(analysisFields),
+            })
+
+            console.log('Analysis complete, fields updated:', Object.keys(analysisFields))
+
+            return { success: true }
+        } catch (error) {
+            console.error('Selective analysis error:', error)
+            const message = error instanceof Error ? error.message : 'Unknown error'
+
+            await this.logAnalysisHistory(signalId, {
+                type: 'analysis_selective_failed',
+                timestamp: new Date().toISOString(),
+                error: message,
+                fields_requested: fields,
+            })
+
+            return { success: false, error: message }
+        }
+    }
+
+// Helper to filter questions
+    private filterQuestions(
+        allQuestions: Record<string, string>,
+        requestedFields: string[],
+        layerFields: string[]
+    ): Record<string, string> {
+        const filtered: Record<string, string> = {}
+
+        // Map field names to question keys
+        const fieldToQuestion: Record<string, string> = {
+            'signal_title': 'title',
+            'signal_summary': 'summary',
+            'signal_environment': 'environment',
+            'signal_temperature': 'temperature',
+            'signal_density': 'density',
+            'signal_actions': 'actions',
+            'signal_entities': 'entities',
+            'signal_tags': 'tags',
+            'signal_energy': 'energy',
+            'signal_state': 'state',
+            'signal_orientation': 'orientation',
+            'signal_substrate': 'substrate',
+            'signal_ontological_states': 'ontological_states',
+            'signal_symbolic_elements': 'symbolic_elements',
+            'signal_subsystems': 'subsystems',
+            'signal_dominant_language': 'dominant_language',
+        }
+
+        for (const field of requestedFields) {
+            if (layerFields.includes(field)) {
+                const questionKey = fieldToQuestion[field]
+                if (questionKey && allQuestions[questionKey]) {
+                    filtered[questionKey] = allQuestions[questionKey]
+                }
+            }
+        }
+
+        return filtered
+    }
+
+// Helper to filter fields
+    private filterFields(data: any, requestedFields: string[]): any {
+        const filtered: any = {}
+        for (const field of requestedFields) {
+            if (field in data) {
+                filtered[field] = data[field]
+            }
+        }
+        return filtered
+    }
+
     private async loadPrompt(filename: string): Promise<string> {
         const filePath = path.join(process.cwd(), 'lib', 'prompts', 'analyze', filename)
         return await fs.readFile(filePath, 'utf-8')
@@ -287,7 +574,6 @@ export class AnalysisService {
             console.log('Successfully logged analysis history')
         } catch (error) {
             console.error('Failed to log analysis history:', error)
-            throw error
         }
     }
 }

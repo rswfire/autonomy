@@ -3,10 +3,12 @@
 
 import {AnalysisHistory} from "@/components/admin/AnalysisHistory";
 import {AnnotationsPanel} from "@/components/admin/AnnotationsPanel";
+import {SignalAnalysisForm} from "@/components/admin/forms/SignalAnalysisForm";
+import Icon from "@/components/Icon";
 import {SIGNAL_CONTEXT, SIGNAL_STATUS, SIGNAL_TYPES, SIGNAL_VISIBILITY} from '@/lib/constants'
 import type {Realm} from '@/lib/types'
 import {useRouter} from 'next/navigation'
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {Controller, useForm} from 'react-hook-form'
 import {toast} from 'sonner'
 import { Button, Card, Input, Select, TagInput, Textarea } from '../ui'
@@ -60,6 +62,12 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms,
     const [annotations, setAnnotations] = useState(defaultValues?.signal_annotations || {})
     const [triggerReanalysis, setTriggerReanalysis] = useState(false)
 
+    // Add reflection state here
+    const [showReflectionForm, setShowReflectionForm] = useState(false)
+    const [reflectionTypes, setReflectionTypes] = useState<string[]>([])
+    const [isReflecting, setIsReflecting] = useState(false)
+    const [reflections, setReflections] = useState<any[]>([])
+
     const formDefaults = getSignalFormDefaults(defaultValues)
     const { register, control, handleSubmit, setValue, watch, formState: { errors } } = useForm({
         defaultValues: formDefaults,
@@ -69,6 +77,79 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms,
     const [latitude, setLatitude] = useState(locationState.latitude)
     const [longitude, setLongitude] = useState(locationState.longitude)
     const signalType = watch('signal_type')
+    const [showAnalysisForm, setShowAnalysisForm] = useState(false)
+
+    useEffect(() => {
+        if (mode === 'edit' && signalId) {
+            const loadReflections = async () => {
+                try {
+                    const response = await fetch(`/api/admin/signals/${signalId}/reflections`)
+                    if (response.ok) {
+                        const data = await response.json()
+                        setReflections(data.reflections || [])
+                    }
+                } catch (error) {
+                    console.error('Failed to load reflections:', error)
+                }
+            }
+
+            loadReflections()
+        }
+    }, [mode, signalId])
+
+// Add reflection handler
+    const handleReflect = async () => {
+        if (reflectionTypes.length === 0) {
+            toast.error('Please select at least one reflection type')
+            return
+        }
+
+        setIsReflecting(true)
+        toast.info('Generating reflections...', {
+            duration: Infinity,
+            id: 'reflection',
+            description: 'This may take a moment.'
+        })
+
+        try {
+            const response = await fetch(`/api/admin/signals/${signalId}/reflect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    realm_id: watch('realm_id'),
+                    reflection_types: reflectionTypes,
+                }),
+            })
+
+            toast.dismiss('reflection')
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.error || 'Reflection failed')
+            }
+
+            const data = await response.json()
+
+            toast.success(`Generated ${data.reflections.length} reflection(s)`)
+
+            // Reload reflections
+            const reflectionsResponse = await fetch(`/api/admin/signals/${signalId}/reflections`)
+            if (reflectionsResponse.ok) {
+                const reflectionsData = await reflectionsResponse.json()
+                setReflections(reflectionsData.reflections || [])
+            }
+
+            // Clear selection
+            setReflectionTypes([])
+        } catch (error) {
+            console.error('Reflection error:', error)
+            toast.error('Failed to generate reflections', {
+                description: error instanceof Error ? error.message : 'Unknown error'
+            })
+        } finally {
+            setIsReflecting(false)
+        }
+    }
 
     const onSubmit = async (data: any) => {
         setIsSubmitting(true)
@@ -202,8 +283,138 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms,
             )}
 
             {mode === 'edit' && signalId && (
-                <div className="flex justify-end mb-4">
-                    <AnalyzeButton signalId={signalId} />
+                <div className="mb-8">
+                    <div className="flex justify-end gap-3">
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault()
+                                setShowAnalysisForm(!showAnalysisForm)
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                        >
+                            <Icon name="Sparkles" size={16} />
+                            Analyze Signal
+                            <Icon name={showAnalysisForm ? "ChevronUp" : "ChevronDown"} size={16} />
+                        </button>
+
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault()
+                                setShowReflectionForm(!showReflectionForm)
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                        >
+                            <Icon name="BookOpen" size={16} />
+                            Generate Reflections
+                            <Icon name={showReflectionForm ? "ChevronUp" : "ChevronDown"} size={16} />
+                        </button>
+                    </div>
+
+                    {showAnalysisForm && (
+                        <div className="mt-4 p-6 bg-white border border-gray-200 rounded-lg">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-2">Signal Analysis</h2>
+                            <p className="text-sm text-gray-600 mb-6">
+                                Select which fields to update, then run analysis. Only the selected fields will be processed and updated.
+                            </p>
+                            <SignalAnalysisForm signalId={signalId} realmId={watch('realm_id')} />
+                        </div>
+                    )}
+
+                    {showReflectionForm && (
+                        <div className="mt-4 p-6 bg-white border border-gray-200 rounded-lg">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-2">Generate Reflections</h2>
+                            <p className="text-sm text-gray-600 mb-6">
+                                Select reflection types to generate narrative insights from this signal's complete data.
+                            </p>
+
+                            <div className="space-y-4">
+                                <div className="flex flex-wrap gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={reflectionTypes.includes('MIRROR')}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setReflectionTypes([...reflectionTypes, 'MIRROR'])
+                                                } else {
+                                                    setReflectionTypes(reflectionTypes.filter(t => t !== 'MIRROR'))
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-purple-600 rounded"
+                                        />
+                                        <span className="font-medium">Mirror</span>
+                                        <span className="text-sm text-gray-500">— High-fidelity structural reflection</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={reflectionTypes.includes('MYTH')}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setReflectionTypes([...reflectionTypes, 'MYTH'])
+                                                } else {
+                                                    setReflectionTypes(reflectionTypes.filter(t => t !== 'MYTH'))
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-purple-600 rounded"
+                                        />
+                                        <span className="font-medium">Myth</span>
+                                        <span className="text-sm text-gray-500">— Archetypal/symbolic narrative</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={reflectionTypes.includes('NARRATIVE')}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setReflectionTypes([...reflectionTypes, 'NARRATIVE'])
+                                                } else {
+                                                    setReflectionTypes(reflectionTypes.filter(t => t !== 'NARRATIVE'))
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-purple-600 rounded"
+                                        />
+                                        <span className="font-medium">Narrative</span>
+                                        <span className="text-sm text-gray-500">— Temporal/developmental story</span>
+                                    </label>
+                                </div>
+
+                                <button
+                                    onClick={handleReflect}
+                                    disabled={isReflecting || reflectionTypes.length === 0}
+                                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {isReflecting ? 'Generating...' : 'Generate Selected Reflections'}
+                                </button>
+                            </div>
+
+                            {reflections.length > 0 && (
+                                <div className="mt-8 space-y-6">
+                                    <h3 className="text-lg font-semibold text-gray-900">Existing Reflections</h3>
+                                    {reflections.map((reflection) => (
+                                        <div key={reflection.reflection_id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Icon name="BookOpen" size={16} className="text-purple-600" />
+                                                    <h4 className="text-lg font-semibold text-gray-900">
+                                                        {reflection.reflection_type}
+                                                    </h4>
+                                                </div>
+                                                <span className="text-sm text-gray-500">
+                                        {new Date(reflection.stamp_created).toLocaleDateString()}
+                                    </span>
+                                            </div>
+                                            <div className="prose prose-gray max-w-none text-gray-700 whitespace-pre-wrap">
+                                                {reflection.reflection_content}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 
