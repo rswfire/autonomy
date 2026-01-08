@@ -1,4 +1,4 @@
-// app/api/admin/signals/[id]/reflections/route.ts
+// app/api/signals/[id]/reflections/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
@@ -7,10 +7,13 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id: signalId } = await params
+        console.log('ROUTE HIT')
+        const { id } = await params
+        console.log('Signal ID:', id)
+
         const reflections = await prisma.reflection.findMany({
             where: {
-                polymorphic_id: signalId,
+                polymorphic_id: id,
                 polymorphic_type: 'signal',
             },
             orderBy: {
@@ -18,14 +21,16 @@ export async function GET(
             },
         })
 
+        console.log('Found reflections:', reflections.length)
+
         return NextResponse.json({
             success: true,
             reflections,
         })
     } catch (error) {
-        console.error('Failed to fetch reflections:', error)
+        console.error('ROUTE ERROR:', error)
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error: String(error) },
             { status: 500 }
         )
     }
