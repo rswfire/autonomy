@@ -29,7 +29,7 @@ Return only a JSON object with the following structure:
   "density": 0.0,
   "actions": ["value1", "value2", ...],
   "entities": [
-    {"name": "...", "type": "person|place|project|system", "context": "..."},
+    {"name": "...", "type": "people|animals|places|infrastructure|organizations|concepts|media", "context": "..."},
     ...
   ],
   "tags": ["value1", "value2", ...]

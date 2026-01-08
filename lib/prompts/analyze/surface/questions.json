@@ -11,7 +11,7 @@
 
   "actions": "List specific, concrete actions described or shown in this signal. Use short phrases (e.g., 'walked to the beach', 'configured server', 'called friend'). If no actions are present, return empty array.",
 
-  "entities": "List named people, places, projects, or systems referenced in this signal. For each, provide: name (the entity name), type (person/place/project/system), and context (brief description of their role or relevance). Exclude metaphors or archetypes — only concrete entities. If none, return empty array.",
+  "entities": "List named entities referenced in this signal. For each, provide: name (the entity name), type (people/animals/places/infrastructure/organizations/concepts/media), and context (brief description of their role or relevance). Return as array of objects with this exact structure: {\"name\": \"...\", \"type\": \"people|animals|places|infrastructure|organizations|concepts|media\", \"context\": \"...\"}. If none, return empty array.",
 
   "tags": "List 3-7 surface-level semantic tags relevant to this signal (e.g., 'infrastructure work', 'financial planning', 'coastal walk', 'system design'). Return as array of short phrases."
 }
