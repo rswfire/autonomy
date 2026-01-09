@@ -13,5 +13,5 @@
 
   "subsystems": "Which subsystems are engaged in this signal, and what role does each play? For each subsystem, note both its presence and its function in this specific context. Format as: 'subsystem_name (role/context)'. Consider: cognitive, ethical, somatic, emotional, relational, infrastructural, ecological, technical, financial, temporal, spatial. Return as array. Examples: 'financial (constraint boundary)', 'relational (functional contrast to prior context)', 'infrastructural (primary focus)', 'cognitive (pattern recognition)', 'somatic (embodied signal)'.",
 
-  "dominant_language": "What language domains are dominant in this signal? Consider: technical, architectural, ecological, ontological, ethical, relational, infrastructural, poetic. Return as array of 2-4 domains."
+  "dominant_language": "What words, phrases, or semantic themes carry the most weight in this transmission? Not just frequency, but conceptual density. What language is doing the most work? Return 3-7 key terms or short phrases."
 }

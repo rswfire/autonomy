@@ -37,11 +37,9 @@ export type SignalAnnotations = {
 }
 
 export type SignalEntities = {
-    people?: string[]
-    animals?: string[]
+    beings?: string[]
     places?: string[]
-    infrastructure?: string[]
-    organizations?: string[]
+    systems?: string[]
     concepts?: string[]
     media?: string[]
 }
@@ -63,22 +61,6 @@ export type SignalPayload = Record<string, unknown>
 export type SignalTags = string[]
 
 // JSON Fields
-
-export type ConversationMetadata = {
-    message_count?: number
-    duration_minutes?: number
-    model?: string
-    total_tokens?: number
-}
-
-export type ConversationPayload = {
-    messages: Array<{
-        role: "user" | "assistant"
-        content: string
-        timestamp?: string
-    }>
-    platform?: "claude" | "chatgpt" | "other"
-}
 
 export type DocumentMetadata = {
     word_count?: number
