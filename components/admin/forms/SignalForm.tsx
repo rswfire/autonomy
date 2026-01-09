@@ -198,8 +198,8 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms,
 
             // Call API route instead of Prisma query
             const url = mode === 'create'
-                ? '/api/admin/signals'
-                : `/api/admin/signals/${defaultValues?.signal_id}`
+                ? '/api/admin/signals/'
+                : `/api/admin/signals/${defaultValues?.signal_id}/`
 
             const response = await fetch(url, {
                 method: mode === 'create' ? 'POST' : 'PATCH',
