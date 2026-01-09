@@ -1,9 +1,10 @@
 // lib/validation/reflection.ts
 import { z } from 'zod'
+import { REFLECTION_TYPES } from '../constants/reflection'
 
 export const createReflectionSchema = z.object({
     realm_id: z.string(),
-    reflection_type: z.enum(['MIRROR', 'MYTH', 'NARRATIVE']),
+    reflection_type: z.enum(REFLECTION_TYPES),
     reflection_source: z.string().optional(),
     reflection_depth: z.number().default(0),
     polymorphic_id: z.string(),
@@ -24,7 +25,7 @@ export const updateReflectionSchema = z.object({
 
 export const reflectionFilterSchema = z.object({
     realm_id: z.string().optional(),
-    reflection_type: z.enum(['MIRROR', 'MYTH', 'NARRATIVE']).optional(),
+    reflection_type: z.enum(REFLECTION_TYPES).optional(),
     polymorphic_id: z.string().optional(),
     polymorphic_type: z.enum(['signal', 'cluster']).optional(),
     limit: z.number().min(1).max(100).default(10),

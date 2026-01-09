@@ -32,8 +32,10 @@
 
 ## TASK
 
-Generate a **mirror reflection** for this signal.
+Reflect what is structurally present in this signal.
 
-Reflect back what is structurally, energetically, and ontologically present. Use precise language. Stay grounded in the data.
+Show what is there. State what this reveals. Recognize the architecture without interpretation.
 
-Do not add interpretation beyond what the signal reveals. This is recognition, not analysis.
+Write with unflinching clarity. Use direct address. Land in the center.
+
+This is a mirror. Reflect what is.

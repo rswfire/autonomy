@@ -30,7 +30,7 @@ import {
     getSignalFormDefaults,
     extractLocationState
 } from '@/lib/forms/signal/defaults'
-import { AnalyzeButton } from '../AnalyzeButton'
+import { REFLECTION_DESCRIPTIONS, REFLECTION_TYPES } from '@/lib/constants/reflection'
 
 interface SignalFormProps {
     mode: 'create' | 'edit'
@@ -329,56 +329,26 @@ export function SignalForm({ mode, defaultValues, onSuccess, isPostgres, realms,
 
                             <div className="space-y-4">
                                 <div className="flex flex-wrap gap-4">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={reflectionTypes.includes('MIRROR')}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setReflectionTypes([...reflectionTypes, 'MIRROR'])
-                                                } else {
-                                                    setReflectionTypes(reflectionTypes.filter(t => t !== 'MIRROR'))
-                                                }
-                                            }}
-                                            className="w-4 h-4 text-purple-600 rounded"
-                                        />
-                                        <span className="font-medium">Mirror</span>
-                                        <span className="text-sm text-gray-500">— High-fidelity structural reflection</span>
-                                    </label>
-
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={reflectionTypes.includes('MYTH')}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setReflectionTypes([...reflectionTypes, 'MYTH'])
-                                                } else {
-                                                    setReflectionTypes(reflectionTypes.filter(t => t !== 'MYTH'))
-                                                }
-                                            }}
-                                            className="w-4 h-4 text-purple-600 rounded"
-                                        />
-                                        <span className="font-medium">Myth</span>
-                                        <span className="text-sm text-gray-500">— Archetypal/symbolic narrative</span>
-                                    </label>
-
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={reflectionTypes.includes('NARRATIVE')}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setReflectionTypes([...reflectionTypes, 'NARRATIVE'])
-                                                } else {
-                                                    setReflectionTypes(reflectionTypes.filter(t => t !== 'NARRATIVE'))
-                                                }
-                                            }}
-                                            className="w-4 h-4 text-purple-600 rounded"
-                                        />
-                                        <span className="font-medium">Narrative</span>
-                                        <span className="text-sm text-gray-500">— Temporal/developmental story</span>
-                                    </label>
+                                    <div className="flex flex-wrap gap-4">
+                                        {REFLECTION_TYPES.map((type) => (
+                                            <label key={type} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={reflectionTypes.includes(type)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setReflectionTypes([...reflectionTypes, type])
+                                                        } else {
+                                                            setReflectionTypes(reflectionTypes.filter(t => t !== type))
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 text-purple-600 rounded"
+                                                />
+                                                <span className="font-medium">{type.charAt(0) + type.slice(1).toLowerCase()}</span>
+                                                <span className="text-sm text-gray-500">— {REFLECTION_DESCRIPTIONS[type]}</span>
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <button

@@ -1,4 +1,5 @@
 // app/api/admin/signals/[id]/reflect/route.ts
+import {REFLECTION_TYPES} from "@/lib/constants/reflection";
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { ReflectionService } from '@/lib/services/reflection'
@@ -19,7 +20,7 @@ export async function POST(
         }
 
         // Validate reflection types
-        const validTypes = ['MIRROR', 'MYTH', 'NARRATIVE']
+        const validTypes = [...REFLECTION_TYPES]
         const invalidTypes = reflection_types.filter(t => !validTypes.includes(t.toUpperCase()))
         if (invalidTypes.length > 0) {
             return NextResponse.json(

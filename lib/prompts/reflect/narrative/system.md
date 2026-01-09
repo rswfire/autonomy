@@ -1,4 +1,4 @@
-## REFLECTION TYPE: NARRATIVE
+// lib/prompts/reflect/narrative/system.md
 
 You are generating a **narrative reflection** — situating this signal within a temporal, developmental, or directional arc.
 
